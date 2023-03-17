@@ -52,26 +52,24 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 {
 	if (phase == 2)
 	{
-		if (back_distance < 0 && back_selected)
+		if (back.GetLeft() < 0 && back_selected)
 		{
-			back_distance += 10;
+			back.SetTopLeft(back.GetLeft() + 10, 80);
 		}
-		else if (back_distance > -40 && !back_selected)
+		else if (back.GetLeft() > -40 && !back_selected)
 		{
-			back_distance -= 10;
+			back.SetTopLeft(back.GetLeft() - 10, 80);
 		}
-		back.SetTopLeft(back_distance, 80);
 		for (int i = 0; i < 4; i++)
 		{
-			if (second_menu_distance[i] > 305 && second_menu_selected[i])
+			if (second_menu[i].GetLeft() > 305 && second_menu_selected[i])
 			{
-				second_menu_distance[i] -= 10;
+				second_menu[i].SetTopLeft(second_menu[i].GetLeft() - 10, 100 + i * 140);
 			}
-			else if (second_menu_distance[i] < 375 && !second_menu_selected[i])
+			else if (second_menu[i].GetLeft() < 375 && !second_menu_selected[i])
 			{
-				second_menu_distance[i] += 10;
+				second_menu[i].SetTopLeft(second_menu[i].GetLeft() + 10, 100 + i * 140);
 			}
-			second_menu[i].SetTopLeft(second_menu_distance[i], 100 + i * 140);
 		}
 	}
 }
@@ -95,6 +93,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	osk.SetTopLeft(0, 930);
 
 	background.LoadBitmapByString({ "resources/background1.bmp",  "resources/background2.bmp", "resources/background3.bmp", "resources/background4.bmp",  "resources/background5.bmp", "resources/background6.bmp" });
+	background.SetFrameIndexOfBitmap(rand() % 6);
 	background.SetTopLeft(0, 0);
 
 	second_menu[0].LoadBitmapByString({ "resources/40l.bmp", "resources/40l_selected.bmp" });
@@ -152,7 +151,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		{
 			if (click_check(nFlags, point, second_menu[i]))
 			{
-				background.SetFrameIndexOfBitmap(rand() % 5 + 1);
+				background.SetFrameIndexOfBitmap(rand() % 6);
 				phase = 3+i;
 				sub_phase = 1;
 			}

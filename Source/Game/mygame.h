@@ -102,15 +102,14 @@ namespace game_framework {
 
 		CMovingBitmap second_menu[4];					// 二級菜單
 		bool second_menu_selected[4] = { false, false, false, false };
-		int second_menu_distance[4] = { 375, 375, 375, 375 };
-
+		
 		CMovingBitmap back;
 		bool back_selected = false;
-		int back_distance = -40;
 
 		CMovingBitmap logo;
-
 		CMovingBitmap game_mode;
+
+		CMovingBitmap third_menu[4];
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
