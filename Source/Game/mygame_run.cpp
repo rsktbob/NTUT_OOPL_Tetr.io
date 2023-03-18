@@ -6,8 +6,6 @@
 #include "../Library/gameutil.h"
 #include "../Library/gamecore.h"
 #include "mygame.h"
-#include <cstdlib>
-#include <ctime>
 
 using namespace game_framework;
 
@@ -152,7 +150,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			if (click_check(nFlags, point, second_menu[i]))
 			{
 				background.SetFrameIndexOfBitmap(rand() % 6);
-				phase = 3+i;
+				phase = 3 + i;
 				sub_phase = 1;
 			}
 		}
@@ -237,7 +235,7 @@ void CGameStateRun::OnShow()
 		back.ShowBitmap();
 		logo.ShowBitmap();
 		game_mode.ShowBitmap();
-		
+
 		for (int i = 0; i < 4; i++)
 		{
 			second_menu[i].ShowBitmap();

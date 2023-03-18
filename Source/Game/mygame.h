@@ -92,7 +92,7 @@ namespace game_framework {
 	private:
 		int phase;
 		int sub_phase;
-		
+
 		CMovingBitmap first_menu;						// 一級菜單
 		CMovingBitmap join;
 		CMovingBitmap tittle;
@@ -102,14 +102,12 @@ namespace game_framework {
 
 		CMovingBitmap second_menu[4];					// 二級菜單
 		bool second_menu_selected[4] = { false, false, false, false };
-		
+
 		CMovingBitmap back;
 		bool back_selected = false;
 
 		CMovingBitmap logo;
 		CMovingBitmap game_mode;
-
-		CMovingBitmap third_menu[4];
 	};
 
 	/////////////////////////////////////////////////////////////////////////////

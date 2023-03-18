@@ -47,5 +47,5 @@ void CGameStateOver::OnInit()
 
 void CGameStateOver::OnShow()
 {
-	
+
 }
