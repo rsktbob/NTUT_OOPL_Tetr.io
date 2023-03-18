@@ -124,23 +124,33 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	game_mode.LoadBitmapByString({ "resources/game_mode.bmp" });
 	game_mode.SetTopLeft(0, 940);
 
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 22; i++)
 	{
 		for (int j = 0; j < 10; j++)
 		{
 			cube[i * 10 + j] = Cube();
-			cube[i * 10 + j].SetTopLeft(800 + j * 32, 200 + i * 32);
+			cube[i * 10 + j].SetTopLeft(800 + j * 32, 160 + i * 32);
+			if (i < 2)
+			{
+				cube[i * 10 + j].SetFrameIndexOfBitmap(8);
+			}
 		}
 	}
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			cube[200 + i * 4 + j] = Cube();
-			cube[200 + i * 4 + j].SetTopLeft(896 + j * 32, 72 + i * 32);
-			cube[200 + i * 4 + j].SetFrameIndexOfBitmap(8);
-		}
-	}
+
+	cube_hold.LoadBitmapByString({ "resources/cube_hold.bmp" }, RGB(255, 0, 0));
+	cube_hold.SetTopLeft(628, 224);
+	
+	cube_place.LoadBitmapByString({ "resources/cube_place.bmp" }, RGB(255, 0, 0));
+	cube_place.SetTopLeft(1124, 224);
+
+	cube_boundary[0].LoadEmptyBitmap(640, 4);
+	cube_boundary[0].SetTopLeft(796, 224);
+	
+	cube_boundary[1].LoadEmptyBitmap(4, 351);
+	cube_boundary[1].SetTopLeft(796, 864);
+
+	cube_boundary[2].LoadEmptyBitmap(640, 4);
+	cube_boundary[2].SetTopLeft(1120, 224);
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -271,8 +281,8 @@ void CGameStateRun::OnShow()
 	else if (phase == 3)
 	{
 		background.ShowBitmap();
-		
-		for (int i = 0; i < 20; i++)
+
+		for (int i = 0; i < 22; i++)
 		{
 			for (int j = 0; j < 10; j++)
 			{
@@ -280,13 +290,13 @@ void CGameStateRun::OnShow()
 			}
 		}
 
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < 3; i++)
 		{
-			for (int j = 0; j < 4; j++)
-			{
-				cube[200 + i * 4 + j].ShowBitmap();
-			}
+			cube_boundary[i].ShowBitmap();
 		}
+
+		cube_hold.ShowBitmap();
+		cube_place.ShowBitmap();
 	}
 	else if (phase == 4)
 	{
