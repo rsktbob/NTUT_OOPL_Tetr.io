@@ -108,6 +108,8 @@ namespace game_framework {
 
 		CMovingBitmap logo;
 		CMovingBitmap game_mode;
+
+		CMovingBitmap cube[216];
 	};
 
 	/////////////////////////////////////////////////////////////////////////////

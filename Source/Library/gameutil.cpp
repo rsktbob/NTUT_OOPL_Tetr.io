@@ -425,5 +425,4 @@ namespace game_framework {
 		f.CreateFontIndirect(&lf);
 		fp = pDC->SelectObject(&f);
 	}
-
 }         

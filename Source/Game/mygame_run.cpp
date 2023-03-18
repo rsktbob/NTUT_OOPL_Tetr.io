@@ -34,6 +34,15 @@ bool touch_check(CPoint point, CMovingBitmap character)
 	return false;
 }
 
+CMovingBitmap Cube()
+{
+	CMovingBitmap cube;
+	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_red.bmp", "resources/cube_blue.bmp", "resources/cube_yellow.bmp",  "resources/cube_green.bmp",
+		"resources/cube_purple.bmp", "resources/cube_orange.bmp",  "resources/cube_cyan.bmp" }); // 0 black, 1 red, 2 blue, 3 yellow, 4 green, 5 purple, 6 orange, 7 cyan
+	cube.LoadBitmapByString({ "resources/cube_transparent.bmp" }, RGB(255, 255, 255)); // 8 transparent
+	return cube;
+}
+
 CGameStateRun::CGameStateRun(CGame *g) : CGameState(g)
 {
 }
@@ -114,6 +123,24 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	game_mode.LoadBitmapByString({ "resources/game_mode.bmp" });
 	game_mode.SetTopLeft(0, 940);
+
+	for (int i = 0; i < 20; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			cube[i * 10 + j] = Cube();
+			cube[i * 10 + j].SetTopLeft(800 + j * 32, 200 + i * 32);
+		}
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			cube[200 + i * 4 + j] = Cube();
+			cube[200 + i * 4 + j].SetTopLeft(896 + j * 32, 72 + i * 32);
+			cube[200 + i * 4 + j].SetFrameIndexOfBitmap(8);
+		}
+	}
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -244,6 +271,22 @@ void CGameStateRun::OnShow()
 	else if (phase == 3)
 	{
 		background.ShowBitmap();
+		
+		for (int i = 0; i < 20; i++)
+		{
+			for (int j = 0; j < 10; j++)
+			{
+				cube[i * 10 + j].ShowBitmap();
+			}
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				cube[200 + i * 4 + j].ShowBitmap();
+			}
+		}
 	}
 	else if (phase == 4)
 	{

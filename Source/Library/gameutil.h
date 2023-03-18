@@ -155,5 +155,4 @@ namespace game_framework {
 		void static Print(CDC *pdc, int x, int y, string str);
 		void static ChangeFontLog(CDC *pdc, int size, string fontName, COLORREF fontColor, int weight = 500);
 	};
-
 }
