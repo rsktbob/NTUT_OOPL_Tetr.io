@@ -92,6 +92,7 @@ namespace game_framework {
 	private:
 		int phase;
 		int sub_phase;
+		int id;
 
 		CMovingBitmap first_menu;						// 一級菜單
 		CMovingBitmap join;
@@ -106,10 +107,17 @@ namespace game_framework {
 		CMovingBitmap back;
 		bool back_selected = false;
 
-		CMovingBitmap logo;
 		CMovingBitmap game_mode;
 
-		CMovingBitmap cube[220];
+		CMovingBitmap fourtyl_menu[4];
+
+		CMovingBitmap blitz_menu[4];
+
+		CMovingBitmap zen_menu[2];
+
+		CMovingBitmap start[4];
+
+		CMovingBitmap cube[22][10];
 		CMovingBitmap cube_hold;
 		CMovingBitmap cube_place;
 		CMovingBitmap cube_boundary[3];
