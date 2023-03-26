@@ -6,12 +6,15 @@
 #include "../Library/gameutil.h"
 #include "../Library/gamecore.h"
 #include "mygame.h"
+#include <iostream>
 
 using namespace game_framework;
 
 /////////////////////////////////////////////////////////////////////////////
 // 這個class為遊戲的遊戲執行物件，主要的遊戲程式都在這裡
 /////////////////////////////////////////////////////////////////////////////
+
+CAudio* music;
 
 bool click_check(UINT nChar, CPoint point, CMovingBitmap character)
 {
@@ -43,6 +46,28 @@ CMovingBitmap Cube()
 	return cube;
 }
 
+void display_game(CMovingBitmap cube[][10], CMovingBitmap cube_next[][4],  CMovingBitmap cube_place)
+{
+
+	cube_place.ShowBitmap();
+
+	for (int i = 0; i < 22; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			cube[i][j].ShowBitmap();
+		}
+	}
+
+	for (int i = 0; i < 14; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			cube_next[i][j].ShowBitmap();
+		}
+	}
+}
+
 CGameStateRun::CGameStateRun(CGame *g) : CGameState(g)
 {
 }
@@ -63,22 +88,34 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 		{
 			if (second_menu[i].GetLeft() > 305 && second_menu_selected[i])
 			{
+				if (touch_menu_check_first)
+				{
+					music->Play(6);
+					touch_menu_check_first = false;
+				}
 				second_menu[i].SetTopLeft(second_menu[i].GetLeft() - 10, 100 + i * 140);
 			}
 			else if (second_menu[i].GetLeft() < 375 && !second_menu_selected[i])
 			{
+				touch_menu_check_first = true;
 				second_menu[i].SetTopLeft(second_menu[i].GetLeft() + 10, 100 + i * 140);
 			}
 		}
 	}
-	if (phase >= 2)
+	if (phase >= 2 && sub_phase == 1)
 	{
 		if (back.GetLeft() < 0 && back_selected)
 		{
+			if (touch_menu_check_first)
+			{
+				music->Play(6);
+				touch_menu_check_first = false;
+			}
 			back.SetTopLeft(back.GetLeft() + 10, 80);
 		}
 		else if (back.GetLeft() > -40 && !back_selected)
 		{
+			touch_menu_check_first = true;
 			back.SetTopLeft(back.GetLeft() - 10, 80);
 		}
 	}
@@ -89,7 +126,20 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	phase = 1;
 	sub_phase = 1;
 	id = 0;
-	srand((unsigned)time(NULL));
+
+	music = CAudio::Instance();
+	music->Load(0, "resources/Arial_City.wav");
+	music->Load(1, "resources/To_The_Limit.wav");
+	music->Load(2, "resources/The_Great_Eastern_Expedition.wav");
+	music->Load(3, "resources/Morning_Sun_Kamoking.wav");
+	music->Load(4, "resources/In_Sorrow_And_Pains_Mirera.wav");
+	music->Load(5, "resources/Piercing_Wind.wav");
+	music->Load(6, "resources/Touch_Menu.wav");
+	music->Load(7, "resources/Click_Menu.wav");
+	music->Load(8, "resources/Back_Menu.wav");
+	music->Load(9, "resources/Touch_Check_Menu.wav");
+	music->Load(10, "resources/Click_Check_Menu.wav");
+	music->Play(0, true);
 
 	first_menu.LoadBitmapByString({ "resources/first_menu.bmp" });
 	first_menu.SetTopLeft(420, 340);
@@ -104,10 +154,10 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	osk.SetTopLeft(0, 930);
 
 	background.LoadBitmapByString({ "resources/background1.bmp",  "resources/background2.bmp", "resources/background3.bmp", "resources/background4.bmp",  "resources/background5.bmp", "resources/background6.bmp" });
-	background.SetFrameIndexOfBitmap(rand() % 6);
 	background.SetTopLeft(0, 0);
 
 	second_menu[0].LoadBitmapByString({ "resources/40l.bmp", "resources/40l_selected.bmp" });
+	background.SetFrameIndexOfBitmap(rand() % 6);
 	second_menu[0].SetTopLeft(375, 100);
 
 	second_menu[1].LoadBitmapByString({ "resources/blitz.bmp", "resources/blitz_selected.bmp" });
@@ -122,6 +172,9 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	back.LoadBitmapByString({ "resources/back.bmp", "resources/back_selected.bmp" });
 	back.SetTopLeft(-40, 80);
 
+	logo.LoadBitmapByString({ "resources/logo.bmp" }, RGB(255, 255, 255));
+	logo.SetTopLeft(0, 865);
+
 	game_mode.LoadBitmapByString({ "resources/game_mode.bmp", "resources/40l_press_start.bmp",  "resources/blitz_press_start.bmp",  "resources/zen_press_start.bmp" });
 	game_mode.SetTopLeft(0, 940);
 
@@ -130,7 +183,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		for (int j = 0; j < 10; j++)
 		{
 			cube[i][j] = Cube();
-			cube[i][j].SetTopLeft(800 + j * 32, 160 + i * 32);
+			cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
 			if (i < 2)
 			{
 				cube[i][j].SetFrameIndexOfBitmap(8);
@@ -150,7 +203,15 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	fourtyl_menu[3].LoadBitmapByString({ "resources/40l_advanced.bmp" });
 	fourtyl_menu[3].SetTopLeft(270, 638);
 
-	start[0].LoadBitmapByString({ "resources/40l_start.bmp", "resources/40l_start_dark.bmp" });
+	for (int i = 0; i < 4; i++)
+	{
+		fourtyl_menu_check[i].LoadBitmapByString({ "resources/check_transparent.bmp" }, RGB(255, 255, 255));
+		fourtyl_menu_check[i].LoadBitmapByString({ "resources/40l_check.bmp" });
+		fourtyl_menu_check[i].SetTopLeft(290, 457 + i * 36);
+	}
+
+	start[0].LoadBitmapByString({ "resources/40l_start_1.bmp", "resources/40l_start_2.bmp", "resources/40l_start_3.bmp", "resources/40l_start_4.bmp", "resources/40l_start_5.bmp", 
+		"resources/40l_start_6.bmp", "resources/40l_start_7.bmp", "resources/40l_start_8.bmp", "resources/40l_start_7.bmp", "resources/40l_start_6.bmp", "resources/40l_start_5.bmp", "resources/40l_start_4.bmp", "resources/40l_start_3.bmp", "resources/40l_start_2.bmp", });
 	start[0].SetTopLeft(1391, 288);
 
 	blitz_menu[0].LoadBitmapByString({ "resources/blitz_information.bmp" });
@@ -165,7 +226,15 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	blitz_menu[3].LoadBitmapByString({ "resources/blitz_advanced.bmp" });
 	blitz_menu[3].SetTopLeft(270, 638);
 
-	start[1].LoadBitmapByString({ "resources/blitz_start.bmp", "resources/blitz_start_dark.bmp" });
+	for (int i = 0; i < 4; i++)
+	{
+		blitz_menu_check[i].LoadBitmapByString({ "resources/check_transparent.bmp" }, RGB(255, 255, 255));
+		blitz_menu_check[i].LoadBitmapByString({ "resources/blitz_check.bmp" });
+		blitz_menu_check[i].SetTopLeft(290, 457 + i * 36);
+	}
+
+	start[1].LoadBitmapByString({ "resources/blitz_start_1.bmp", "resources/blitz_start_2.bmp", "resources/blitz_start_3.bmp", "resources/blitz_start_4.bmp", "resources/blitz_start_5.bmp",
+		"resources/blitz_start_6.bmp", "resources/blitz_start_7.bmp", "resources/blitz_start_8.bmp", "resources/blitz_start_7.bmp", "resources/blitz_start_6.bmp", "resources/blitz_start_5.bmp","resources/blitz_start_4.bmp", "resources/blitz_start_3.bmp", "resources/blitz_start_2.bmp" });
 	start[1].SetTopLeft(1391, 290);
 
 	zen_menu[0].LoadBitmapByString({ "resources/zen_information.bmp" });
@@ -174,23 +243,22 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	zen_menu[1].LoadBitmapByString({ "resources/zen_blank.bmp" });
 	zen_menu[1].SetTopLeft(270, 284);
 
-	start[2].LoadBitmapByString({ "resources/zen_start.bmp", "resources/zen_start_dark.bmp" });
+	start[2].LoadBitmapByString({ "resources/zen_start_1.bmp", "resources/zen_start_2.bmp", "resources/zen_start_3.bmp", "resources/zen_start_4.bmp", "resources/zen_start_5.bmp",
+		"resources/zen_start_6.bmp", "resources/zen_start_7.bmp", "resources/zen_start_8.bmp", "resources/zen_start_7.bmp", "resources/zen_start_6.bmp", "resources/zen_start_5.bmp","resources/zen_start_4.bmp", "resources/zen_start_3.bmp", "resources/zen_start_2.bmp" });
 	start[2].SetTopLeft(1395, 285);
-
-	cube_hold.LoadBitmapByString({ "resources/cube_hold.bmp" }, RGB(255, 0, 0));
-	cube_hold.SetTopLeft(628, 224);
 	
-	cube_place.LoadBitmapByString({ "resources/cube_place.bmp" }, RGB(255, 0, 0));
-	cube_place.SetTopLeft(1124, 224);
+	cube_place.LoadBitmapByString({ "resources/cube_place.bmp" }, RGB(0, 0, 255));
+	cube_place.SetTopLeft(618, 224);
 
-	cube_boundary[0].LoadEmptyBitmap(640, 4);
-	cube_boundary[0].SetTopLeft(796, 224);
-	
-	cube_boundary[1].LoadEmptyBitmap(4, 351);
-	cube_boundary[1].SetTopLeft(796, 864);
-
-	cube_boundary[2].LoadEmptyBitmap(640, 4);
-	cube_boundary[2].SetTopLeft(1120, 224);
+	for (int i = 0; i < 14; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			cube_next[i][j] = Cube();
+			cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
+			cube_next[i][j].SetFrameIndexOfBitmap(2);
+		}
+	}
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -217,8 +285,11 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 	{
 		if (click_check(nFlags, point, back))
 		{
+			music->Play(8);
 			tittle.SetFrameIndexOfBitmap(0);
 			back.SetFrameIndexOfBitmap(0);
+			back_selected = false;
+			back.SetTopLeft(-40, 80);
 			phase = 1;
 			sub_phase = 1;
 		}
@@ -226,31 +297,87 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		{
 			if (click_check(nFlags, point, second_menu[i]))
 			{
-				background.SetFrameIndexOfBitmap(rand() % 6);
+				music->Play(7);
 				tittle.SetFrameIndexOfBitmap(i + 2);
 				game_mode.SetFrameIndexOfBitmap(i + 1);
 				id = i;
-				start[i].SetAnimation(200, false);
+				start[i].SetAnimation(60, false);
 				phase = 3 + i;
 				sub_phase = 1;
 			}
 		}
 	}
-	else if (phase >= 3)
+	else if (phase >= 3 && sub_phase == 1)
 	{
 		if (click_check(nFlags, point, back))
 		{
+			music->Play(8);
 			tittle.SetFrameIndexOfBitmap(1);
 			back.SetFrameIndexOfBitmap(0);
-			start[id].SetAnimation(200, true);
+			start[id].SetAnimation(60, true);
 			game_mode.SetFrameIndexOfBitmap(0);
 			phase = 2;
 			sub_phase = 1;
 		}
-		for (int i = 0; i < 3; i++)
+		if (phase == 3)
 		{
-			if (click_check(nFlags, point, start[i]))
+			if (click_check(nFlags, point, start[0]))
 			{
+				music->Play(7);
+				music->Stop(0);
+				music->Play(rand() % 6, true);
+				background.SetFrameIndexOfBitmap(rand() % 6);
+				sub_phase = 2;
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				if (click_check(nFlags, point, fourtyl_menu_check[i]))
+				{
+					music->Play(10);
+					if (fourtyl_menu_check[i].GetFrameIndexOfBitmap() == 0)
+					{
+						fourtyl_menu_check[i].SetFrameIndexOfBitmap(1);
+					}
+					else
+					{
+						fourtyl_menu_check[i].SetFrameIndexOfBitmap(0);
+					}
+				}
+			}
+		}
+		else if (phase == 4)
+		{
+			if (click_check(nFlags, point, start[1]))
+			{
+				music->Play(7);
+				music->Stop(0);
+				music->Play(rand() % 6, true);
+				background.SetFrameIndexOfBitmap(rand() % 6);
+				sub_phase = 2;
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				if (click_check(nFlags, point, blitz_menu_check[i]))
+				{
+					music->Play(10);
+					if (blitz_menu_check[i].GetFrameIndexOfBitmap() == 0)
+					{
+						blitz_menu_check[i].SetFrameIndexOfBitmap(1);
+					}
+					else
+					{
+						blitz_menu_check[i].SetFrameIndexOfBitmap(0);
+					}
+				}
+			}
+		}
+		else if (phase == 5)
+		{
+			if (click_check(nFlags, point, start[2]))
+			{
+				music->Play(7);
+				music->Stop(0);
+				music->Play(rand() % 6, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
 				sub_phase = 2;
 			}
@@ -335,6 +462,7 @@ void CGameStateRun::OnShow()
 		background.ShowBitmap();
 		tittle.ShowBitmap();
 		back.ShowBitmap();
+		logo.ShowBitmap();
 		game_mode.ShowBitmap();
 
 		for (int i = 0; i < 4; i++)
@@ -355,27 +483,18 @@ void CGameStateRun::OnShow()
 				fourtyl_menu[i].ShowBitmap();
 			}
 
+			for (int i = 0; i < 4; i++)
+			{
+				fourtyl_menu_check[i].ShowBitmap();
+			}
+
 			start[0].ShowBitmap();
 		}
 		else if (sub_phase == 2)
 		{
 			background.ShowBitmap();
 
-			for (int i = 0; i < 22; i++)
-			{
-				for (int j = 0; j < 10; j++)
-				{
-					cube[i][j].ShowBitmap();
-				}
-			}
-
-			cube_hold.ShowBitmap();
-			cube_place.ShowBitmap();
-
-			for (int i = 0; i < 3; i++)
-			{
-				cube_boundary[i].ShowBitmap();
-			}
+			display_game(cube, cube_next,  cube_place);
 		}
 	}
 	else if (phase == 4)
@@ -391,27 +510,18 @@ void CGameStateRun::OnShow()
 				blitz_menu[i].ShowBitmap();
 			}
 
+			for (int i = 0; i < 4; i++)
+			{
+				blitz_menu_check[i].ShowBitmap();
+			}
+
 			start[1].ShowBitmap();
 		}
 		else if (sub_phase == 2)
 		{
 			background.ShowBitmap();
 
-			for (int i = 0; i < 22; i++)
-			{
-				for (int j = 0; j < 10; j++)
-				{
-					cube[i][j].ShowBitmap();
-				}
-			}
-
-			cube_hold.ShowBitmap();
-			cube_place.ShowBitmap();
-
-			for (int i = 0; i < 3; i++)
-			{
-				cube_boundary[i].ShowBitmap();
-			}
+			display_game(cube, cube_next,  cube_place);
 		}
 	}
 	else if (phase == 5)
@@ -433,21 +543,7 @@ void CGameStateRun::OnShow()
 		{
 			background.ShowBitmap();
 
-			for (int i = 0; i < 22; i++)
-			{
-				for (int j = 0; j < 10; j++)
-				{
-					cube[i][j].ShowBitmap();
-				}
-			}
-
-			cube_hold.ShowBitmap();
-			cube_place.ShowBitmap();
-
-			for (int i = 0; i < 3; i++)
-			{
-				cube_boundary[i].ShowBitmap();
-			}
+			display_game(cube, cube_next, cube_place);
 		}
 	}
 	else if (phase == 6)
