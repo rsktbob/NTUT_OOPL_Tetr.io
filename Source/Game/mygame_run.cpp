@@ -16,6 +16,10 @@ using namespace game_framework;
 
 CAudio* music;
 
+bool fire_animation = true;
+
+int speed = 4;
+
 bool click_check(UINT nChar, CPoint point, CMovingBitmap character)
 {
 	if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth()
@@ -35,6 +39,37 @@ bool touch_check(CPoint point, CMovingBitmap character)
 		return true;
 	}
 	return false;
+}
+
+void touch_option_menu(CPoint point, bool& touch_option_menu_selected)
+{
+	if (point.x >= 270 && point.x <= 1655)
+	{
+			if (point.y >= 455 && point.y <= 485)
+			{
+				touch_option_menu_selected = true;
+			}
+			else if (point.y >= 491 && point.y <= 521)
+			{
+				touch_option_menu_selected = true;
+			}
+			else if (point.y >= 527 && point.y <= 557)
+			{
+				touch_option_menu_selected = true;
+			}
+			else if (point.y >= 563 && point.y <= 593)
+			{
+				touch_option_menu_selected = true;
+			}
+			else
+			{
+				touch_option_menu_selected = false;
+			}
+	}
+	else
+	{
+		touch_option_menu_selected = false;
+	}
 }
 
 CMovingBitmap Cube()
@@ -67,6 +102,7 @@ void display_game(CMovingBitmap cube[][10], CMovingBitmap cube_next[][4],  CMovi
 		}
 	}
 }
+
 
 CGameStateRun::CGameStateRun(CGame *g) : CGameState(g)
 {
@@ -119,6 +155,42 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 			back.SetTopLeft(back.GetLeft() - 10, 80);
 		}
 	}
+	if (phase == 3)
+	{
+		if (sub_phase == 1)
+		{
+			if (touch_option_menu_selected)
+			{
+				if (touch_option_menu_first)
+				{
+					music->Play(11);
+					touch_option_menu_first = false;
+				}
+			}
+			else
+			{
+				touch_option_menu_first = true;
+			}
+		}
+	}
+	else if (phase == 4)
+	{
+		if (sub_phase == 1)
+		{
+			if (touch_option_menu_selected)
+			{
+				if (touch_option_menu_first)
+				{
+					music->Play(11);
+					touch_option_menu_first = false;
+				}
+			}
+			else
+			{
+				touch_option_menu_first = true;
+			}
+		}
+	}
 }
 
 void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
@@ -139,6 +211,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(8, "resources/Back_Menu.wav");
 	music->Load(9, "resources/Touch_Check_Menu.wav");
 	music->Load(10, "resources/Click_Check_Menu.wav");
+	music->Load(11, "resources/Touch_Option_Menu.wav");
 	music->Play(0, true);
 
 	first_menu.LoadBitmapByString({ "resources/first_menu.bmp" });
@@ -247,7 +320,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		"resources/zen_start_6.bmp", "resources/zen_start_7.bmp", "resources/zen_start_8.bmp", "resources/zen_start_7.bmp", "resources/zen_start_6.bmp", "resources/zen_start_5.bmp","resources/zen_start_4.bmp", "resources/zen_start_3.bmp", "resources/zen_start_2.bmp" });
 	start[2].SetTopLeft(1395, 285);
 	
-	cube_place.LoadBitmapByString({ "resources/cube_place.bmp" }, RGB(0, 0, 255));
+	cube_place.LoadBitmapByString({ "resources/cube_place.bmp", "resources/cube_place_game_over.bmp" }, RGB(0, 0, 255));
 	cube_place.SetTopLeft(618, 224);
 
 	for (int i = 0; i < 14; i++)
@@ -259,6 +332,10 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 			cube_next[i][j].SetFrameIndexOfBitmap(2);
 		}
 	}
+
+	touch_option_menu_first = true;
+	touch_option_menu_selected = false;
+
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -307,20 +384,19 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 		}
 	}
-	else if (phase >= 3 && sub_phase == 1)
+	else if (phase == 3)
 	{
-		if (click_check(nFlags, point, back))
+		if (sub_phase == 1)
 		{
-			music->Play(8);
-			tittle.SetFrameIndexOfBitmap(1);
-			back.SetFrameIndexOfBitmap(0);
-			start[id].SetAnimation(60, true);
-			game_mode.SetFrameIndexOfBitmap(0);
-			phase = 2;
-			sub_phase = 1;
-		}
-		if (phase == 3)
-		{
+			if (click_check(nFlags, point, back))
+			{
+				music->Play(8);
+				tittle.SetFrameIndexOfBitmap(1);
+				back.SetFrameIndexOfBitmap(0);
+				start[id].SetAnimation(60, true);
+				game_mode.SetFrameIndexOfBitmap(0);
+				phase = 2;;
+			}
 			if (click_check(nFlags, point, start[0]))
 			{
 				music->Play(7);
@@ -345,8 +421,21 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				}
 			}
 		}
-		else if (phase == 4)
+	}
+	else if (phase == 4)
+	{
+		if (sub_phase == 1)
 		{
+			if (click_check(nFlags, point, back))
+			{
+				music->Play(8);
+				tittle.SetFrameIndexOfBitmap(1);
+				back.SetFrameIndexOfBitmap(0);
+				start[id].SetAnimation(60, true);
+				game_mode.SetFrameIndexOfBitmap(0);
+				phase = 2;
+				sub_phase = 1;
+			}
 			if (click_check(nFlags, point, start[1]))
 			{
 				music->Play(7);
@@ -371,7 +460,10 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				}
 			}
 		}
-		else if (phase == 5)
+	}
+	else if (phase == 5)
+	{
+		if (sub_phase == 1)
 		{
 			if (click_check(nFlags, point, start[2]))
 			{
@@ -420,6 +512,20 @@ void CGameStateRun::OnMouseMove(UINT nFlags, CPoint point)	// 處理滑鼠的動
 			back_selected = false;
 		}
 	}
+	if (phase == 3)
+	{
+		if (sub_phase == 1)
+		{
+			touch_option_menu(point, touch_option_menu_selected);
+		}
+	}
+	if (phase == 4)
+	{
+		if (sub_phase == 1)
+		{
+			touch_option_menu(point, touch_option_menu_selected);
+		}
+	}
 }
 
 void CGameStateRun::OnRButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的動作
@@ -464,7 +570,6 @@ void CGameStateRun::OnShow()
 		back.ShowBitmap();
 		logo.ShowBitmap();
 		game_mode.ShowBitmap();
-
 		for (int i = 0; i < 4; i++)
 		{
 			second_menu[i].ShowBitmap();
@@ -494,7 +599,7 @@ void CGameStateRun::OnShow()
 		{
 			background.ShowBitmap();
 
-			display_game(cube, cube_next,  cube_place);
+			display_game(cube, cube_next, cube_place);
 		}
 	}
 	else if (phase == 4)

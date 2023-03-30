@@ -95,6 +95,8 @@ namespace game_framework {
 		int id;
 		
 		bool touch_menu_check_first;
+		bool touch_option_menu_first;
+		bool touch_option_menu_selected;
 
 		CMovingBitmap first_menu;						// 一級菜單
 		CMovingBitmap join;
@@ -126,6 +128,8 @@ namespace game_framework {
 		CMovingBitmap cube[22][10];
 		CMovingBitmap cube_place;
 		CMovingBitmap cube_next[14][4];
+
+		CMovingBitmap fire[4];
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -144,5 +148,4 @@ namespace game_framework {
 	private:
 		int counter;	// 倒數之計數器
 	};
-
 }
