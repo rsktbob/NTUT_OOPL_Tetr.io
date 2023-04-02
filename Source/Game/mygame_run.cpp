@@ -6,7 +6,6 @@
 #include "../Library/gameutil.h"
 #include "../Library/gamecore.h"
 #include "mygame.h"
-#include <iostream>
 
 using namespace game_framework;
 
@@ -75,13 +74,13 @@ void touch_option_menu(CPoint point, bool& touch_option_menu_selected)
 CMovingBitmap Cube()
 {
 	CMovingBitmap cube;
-	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_red.bmp", "resources/cube_blue.bmp", "resources/cube_yellow.bmp",  "resources/cube_green.bmp",
-		"resources/cube_purple.bmp", "resources/cube_orange.bmp",  "resources/cube_cyan.bmp" }); // 0 black, 1 red, 2 blue, 3 yellow, 4 green, 5 purple, 6 orange, 7 cyan
-	cube.LoadBitmapByString({ "resources/cube_transparent.bmp" }, RGB(255, 255, 255)); // 8 transparent
+	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_cyan.bmp", "resources/cube_yellow.bmp", "resources/cube_purple.bmp",  "resources/cube_green.bmp",
+		"resources/cube_red.bmp", "resources/cube_blue.bmp",  "resources/cube_orange.bmp" });
+	cube.LoadBitmapByString({ "resources/cube_transparent.bmp" }, RGB(255, 255, 255));
 	return cube;
 }
 
-void display_game(CMovingBitmap cube[][10], CMovingBitmap cube_next[][4],  CMovingBitmap cube_place)
+void display_game(vector<vector<CMovingBitmap>>& cube, vector<vector<CMovingBitmap>>& cube_next,  CMovingBitmap cube_place)
 {
 
 	cube_place.ShowBitmap();
@@ -103,6 +102,91 @@ void display_game(CMovingBitmap cube[][10], CMovingBitmap cube_next[][4],  CMovi
 	}
 }
 
+bool game_over_animation(vector<vector<CMovingBitmap>>& cube, vector<vector<CMovingBitmap>>& cube_next, CMovingBitmap &cube_place, vector<CMovingBitmap> &fire, bool& fire_animation)
+{
+	if (fire_animation)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			fire[i].ToggleAnimation();
+		}
+		fire_animation = false;
+	}
+	if (fire[0].GetFrameIndexOfBitmap() == 37)
+	{
+		if (cube[0][0].GetTop() < 1080)
+		{
+			for (int i = 0; i < 22; i++)
+			{
+				for (int j = 0; j < 10; j++)
+				{
+					cube[i][j].SetTopLeft(cube[i][j].GetLeft(), cube[i][j].GetTop() + speed);
+				}
+			}
+			for (int i = 0; i < 14; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					cube_next[i][j].SetTopLeft(cube_next[i][j].GetLeft(), cube_next[i][j].GetTop() + speed);
+				}
+			}
+			cube_place.SetTopLeft(cube_place.GetLeft(), cube_place.GetTop() + speed);
+			if (speed < 20)
+			{
+				speed += 4;
+			}
+		}
+		else
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				fire[i].SetFrameIndexOfBitmap(0);
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+void game_init(vector<vector<CMovingBitmap>>& cube, vector<vector<CMovingBitmap>>& cube_next, CMovingBitmap &cube_place, vector<CMovingBitmap> &fire, bool& fire_animation)
+{
+	fire_animation = true;
+	for (int i = 0; i < 22; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
+		}
+	}
+	for (int i = 0; i < 14; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			cube_next[i][j] = Cube();
+			cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
+			cube_next[i][j].SetFrameIndexOfBitmap(2);
+		}
+	}
+	cube_place.SetTopLeft(618, 224);
+}
+
+void canvas_update(vector<vector<CMovingBitmap>>& cube, vector<vector<Color>> &canvas)
+{
+	for (int i = 0; i < CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < CANVAS_WIDTH; j++)
+		{
+			if (i < PREVIEW_ROW_COUNT && canvas[i][j] == Color::black)
+			{
+				cube[i][j].SetFrameIndexOfBitmap(Color::transparent);
+			}
+			else
+			{
+				cube[i][j].SetFrameIndexOfBitmap(canvas[i][j]);
+			}
+		}
+	}
+}
 
 CGameStateRun::CGameStateRun(CGame *g) : CGameState(g)
 {
@@ -170,6 +254,16 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 			else
 			{
 				touch_option_menu_first = true;
+			}
+		}
+		else if (sub_phase == 2)
+		{
+			if (game_action_next_time <= clock())
+			{
+				auto game_state = tetris_game.event_handler(Event::tick);
+				vector<vector<Color>> canvas = game_state.canvas;
+				canvas_update(cube, canvas);
+				game_action_next_time = clock() + 500;
 			}
 		}
 	}
@@ -333,9 +427,55 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		}
 	}
 
+	fire[0].LoadBitmapByString({ "resources/fire_1_lt.bmp", "resources/fire_2_lt.bmp", "resources/fire_3_lt.bmp", "resources/fire_4_lt.bmp", "resources/fire_5_lt.bmp",
+		"resources/fire_6_lt.bmp", "resources/fire_7_lt.bmp", "resources/fire_8_lt.bmp", "resources/fire_9_lt.bmp", "resources/fire_10_lt.bmp", "resources/fire_11_lt.bmp",
+		"resources/fire_12_lt.bmp", "resources/fire_13_lt.bmp", "resources/fire_14_lt.bmp", "resources/fire_15_lt.bmp", "resources/fire_16_lt.bmp", "resources/fire_17_lt.bmp",
+		"resources/fire_18_lt.bmp", "resources/fire_19_lt.bmp", "resources/fire_20_lt.bmp", "resources/fire_21_lt.bmp", "resources/fire_22_lt.bmp", "resources/fire_23_lt.bmp",
+		"resources/fire_24_lt.bmp", "resources/fire_25_lt.bmp", "resources/fire_26_lt.bmp", "resources/fire_27_lt.bmp", "resources/fire_28_lt.bmp", "resources/fire_29_lt.bmp",
+		"resources/fire_30_lt.bmp", "resources/fire_31_lt.bmp", "resources/fire_32_lt.bmp", "resources/fire_33_lt.bmp", "resources/fire_34_lt.bmp", "resources/fire_35_lt.bmp",
+		"resources/fire_36_lt.bmp", "resources/fire_37_lt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
+
+	fire[0].SetAnimation(16, true);
+	fire[0].SetTopLeft(670, 78);
+
+	fire[1].LoadBitmapByString({ "resources/fire_1_rt.bmp", "resources/fire_2_rt.bmp", "resources/fire_3_rt.bmp", "resources/fire_4_rt.bmp", "resources/fire_5_rt.bmp",
+	"resources/fire_6_rt.bmp", "resources/fire_7_rt.bmp", "resources/fire_8_rt.bmp", "resources/fire_9_rt.bmp", "resources/fire_10_rt.bmp", "resources/fire_11_lt.bmp",
+	"resources/fire_12_rt.bmp", "resources/fire_13_rt.bmp", "resources/fire_14_rt.bmp", "resources/fire_15_rt.bmp", "resources/fire_16_rt.bmp", "resources/fire_17_rt.bmp",
+	"resources/fire_18_rt.bmp", "resources/fire_19_rt.bmp", "resources/fire_20_rt.bmp", "resources/fire_21_rt.bmp", "resources/fire_22_rt.bmp", "resources/fire_23_lt.bmp",
+	"resources/fire_24_rt.bmp", "resources/fire_25_rt.bmp", "resources/fire_26_rt.bmp", "resources/fire_27_rt.bmp", "resources/fire_28_rt.bmp", "resources/fire_29_lt.bmp",
+	"resources/fire_30_rt.bmp", "resources/fire_31_rt.bmp", "resources/fire_32_rt.bmp", "resources/fire_33_rt.bmp", "resources/fire_34_rt.bmp", "resources/fire_35_lt.bmp",
+	"resources/fire_36_rt.bmp", "resources/fire_37_rt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
+
+	fire[1].SetAnimation(16, true);
+	fire[1].SetTopLeft(1050, 78);
+
+	fire[2].LoadBitmapByString({ "resources/fire_1_lb.bmp", "resources/fire_2_lb.bmp", "resources/fire_3_lb.bmp", "resources/fire_4_lb.bmp", "resources/fire_5_lb.bmp",
+	"resources/fire_6_lb.bmp", "resources/fire_7_lb.bmp", "resources/fire_8_lb.bmp", "resources/fire_9_lb.bmp", "resources/fire_10_lb.bmp", "resources/fire_11_lb.bmp",
+	"resources/fire_12_lb.bmp", "resources/fire_13_lb.bmp", "resources/fire_14_lb.bmp", "resources/fire_15_lb.bmp", "resources/fire_16_lb.bmp", "resources/fire_17_lb.bmp",
+	"resources/fire_18_lb.bmp", "resources/fire_19_lb.bmp", "resources/fire_20_lb.bmp", "resources/fire_21_lb.bmp", "resources/fire_22_lb.bmp", "resources/fire_23_lb.bmp",
+	"resources/fire_24_lb.bmp", "resources/fire_25_lb.bmp", "resources/fire_26_lb.bmp", "resources/fire_27_lb.bmp", "resources/fire_28_lb.bmp", "resources/fire_29_lb.bmp",
+	"resources/fire_30_lb.bmp", "resources/fire_31_lb.bmp", "resources/fire_32_lb.bmp", "resources/fire_33_lb.bmp", "resources/fire_34_lb.bmp", "resources/fire_35_lb.bmp",
+	"resources/fire_36_lb.bmp", "resources/fire_37_lb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
+
+	fire[2].SetAnimation(16, true);
+	fire[2].SetTopLeft(670, 870);
+
+	fire[3].LoadBitmapByString({ "resources/fire_1_rb.bmp", "resources/fire_2_rb.bmp", "resources/fire_3_rb.bmp", "resources/fire_4_rb.bmp", "resources/fire_5_rb.bmp",
+	"resources/fire_6_rb.bmp", "resources/fire_7_rb.bmp", "resources/fire_8_rb.bmp", "resources/fire_9_rb.bmp", "resources/fire_10_rb.bmp", "resources/fire_11_rb.bmp",
+	"resources/fire_12_rb.bmp", "resources/fire_13_rb.bmp", "resources/fire_14_rb.bmp", "resources/fire_15_rb.bmp", "resources/fire_16_rb.bmp", "resources/fire_17_rb.bmp",
+	"resources/fire_18_rb.bmp", "resources/fire_19_rb.bmp", "resources/fire_20_rb.bmp", "resources/fire_21_rb.bmp", "resources/fire_22_rb.bmp", "resources/fire_23_rb.bmp",
+	"resources/fire_24_rb.bmp", "resources/fire_25_rb.bmp", "resources/fire_26_rb.bmp", "resources/fire_27_rb.bmp", "resources/fire_28_rb.bmp", "resources/fire_29_rb.bmp",
+	"resources/fire_30_rb.bmp", "resources/fire_31_rb.bmp", "resources/fire_32_rb.bmp", "resources/fire_33_rb.bmp", "resources/fire_34_rb.bmp", "resources/fire_35_rb.bmp",
+	"resources/fire_36_rb.bmp", "resources/fire_37_rb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
+
+	fire[3].SetAnimation(16, true);
+	fire[3].SetTopLeft(1050, 870);
+	fire_animation = true;
+
 	touch_option_menu_first = true;
 	touch_option_menu_selected = false;
 
+	game_time_interval = 500;
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -403,6 +543,8 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				music->Stop(0);
 				music->Play(rand() % 6, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
+				fire_animation = true;
+				game_action_next_time = clock();
 				sub_phase = 2;
 			}
 			for (int i = 0; i < 4; i++)
@@ -442,6 +584,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				music->Stop(0);
 				music->Play(rand() % 6, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
+				game_action_next_time = clock();
 				sub_phase = 2;
 			}
 			for (int i = 0; i < 4; i++)
@@ -465,12 +608,23 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 	{
 		if (sub_phase == 1)
 		{
+			if (click_check(nFlags, point, back))
+			{
+				music->Play(8);
+				tittle.SetFrameIndexOfBitmap(1);
+				back.SetFrameIndexOfBitmap(0);
+				start[id].SetAnimation(60, true);
+				game_mode.SetFrameIndexOfBitmap(0);
+				phase = 2;
+				sub_phase = 1;
+			}
 			if (click_check(nFlags, point, start[2]))
 			{
 				music->Play(7);
 				music->Stop(0);
 				music->Play(rand() % 6, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
+				game_action_next_time = clock();
 				sub_phase = 2;
 			}
 		}
@@ -547,6 +701,7 @@ void CGameStateRun::OnShow()
 		join.ShowBitmap();
 
 		osk.ShowBitmap();
+
 		if (sub_phase == 2)
 		{
 			sub_phase += 1;
@@ -600,6 +755,11 @@ void CGameStateRun::OnShow()
 			background.ShowBitmap();
 
 			display_game(cube, cube_next, cube_place);
+
+			fire[0].ShowBitmap();
+			fire[1].ShowBitmap();
+			fire[2].ShowBitmap();
+			fire[3].ShowBitmap();
 		}
 	}
 	else if (phase == 4)
