@@ -19,11 +19,11 @@ bool fire_animation = true;
 
 int speed = 4;
 
-bool click_check(UINT nChar, CPoint point, CMovingBitmap character)
+bool click_check(UINT nFlags, CPoint point, CMovingBitmap character)
 {
 	if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth()
 		&& point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight()
-		&& nChar == VK_LBUTTON)
+		&& nFlags == VK_LBUTTON)
 	{
 		return true;
 	}
@@ -74,7 +74,7 @@ void touch_option_menu(CPoint point, bool& touch_option_menu_selected)
 CMovingBitmap Cube()
 {
 	CMovingBitmap cube;
-	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_cyan.bmp", "resources/cube_yellow.bmp", "resources/cube_purple.bmp",  "resources/cube_green.bmp",
+	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_light_blue.bmp", "resources/cube_yellow.bmp", "resources/cube_purple.bmp",  "resources/cube_green.bmp",
 		"resources/cube_red.bmp", "resources/cube_blue.bmp",  "resources/cube_orange.bmp" });
 	cube.LoadBitmapByString({ "resources/cube_transparent.bmp" }, RGB(255, 255, 255));
 	return cube;
@@ -210,7 +210,7 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 			{
 				if (touch_menu_check_first)
 				{
-					music->Play(6);
+					music->Play(AUDIO_ID::Touch_Menu);
 					touch_menu_check_first = false;
 				}
 				second_menu[i].SetTopLeft(second_menu[i].GetLeft() - 10, 100 + i * 140);
@@ -228,7 +228,7 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 		{
 			if (touch_menu_check_first)
 			{
-				music->Play(6);
+				music->Play(AUDIO_ID::Touch_Menu);
 				touch_menu_check_first = false;
 			}
 			back.SetTopLeft(back.GetLeft() + 10, 80);
@@ -258,12 +258,34 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 		}
 		else if (sub_phase == 2)
 		{
-			if (game_action_next_time <= clock())
+			if (game_next_decline_time <= clock())
 			{
 				auto game_state = tetris_game.event_handler(Event::tick);
 				vector<vector<Color>> canvas = game_state.canvas;
 				canvas_update(cube, canvas);
-				game_action_next_time = clock() + 500;
+				game_next_decline_time = clock() + game_decline_time_interval;
+			}
+			if (game_next_move_time <= clock())
+			{
+				if (left_key_down)
+				{
+					auto game_state = tetris_game.event_handler(Event::left);
+					vector<vector<Color>> canvas = game_state.canvas;
+					canvas_update(cube, canvas);
+				}
+				if (right_key_down)
+				{
+					auto game_state = tetris_game.event_handler(Event::right);
+					vector<vector<Color>> canvas = game_state.canvas;
+					canvas_update(cube, canvas);
+				}
+				if (down_key_down)
+				{
+					auto game_state = tetris_game.event_handler(Event::tick);
+					vector<vector<Color>> canvas = game_state.canvas;
+					canvas_update(cube, canvas);
+				}
+				game_next_move_time = clock() + game_move_time_interval;
 			}
 		}
 	}
@@ -275,7 +297,7 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 			{
 				if (touch_option_menu_first)
 				{
-					music->Play(11);
+					music->Play(AUDIO_ID::Touch_Option_Menu);
 					touch_option_menu_first = false;
 				}
 			}
@@ -294,19 +316,19 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	id = 0;
 
 	music = CAudio::Instance();
-	music->Load(0, "resources/Arial_City.wav");
-	music->Load(1, "resources/To_The_Limit.wav");
-	music->Load(2, "resources/The_Great_Eastern_Expedition.wav");
-	music->Load(3, "resources/Morning_Sun_Kamoking.wav");
-	music->Load(4, "resources/In_Sorrow_And_Pains_Mirera.wav");
-	music->Load(5, "resources/Piercing_Wind.wav");
-	music->Load(6, "resources/Touch_Menu.wav");
-	music->Load(7, "resources/Click_Menu.wav");
-	music->Load(8, "resources/Back_Menu.wav");
-	music->Load(9, "resources/Touch_Check_Menu.wav");
-	music->Load(10, "resources/Click_Check_Menu.wav");
-	music->Load(11, "resources/Touch_Option_Menu.wav");
-	music->Play(0, true);
+	music->Load(AUDIO_ID::Arial_City, "resources/Arial_City.wav");
+	music->Load(AUDIO_ID::To_The_Limit, "resources/To_The_Limit.wav");
+	music->Load(AUDIO_ID::The_Great_Eastern_Expedition, "resources/The_Great_Eastern_Expedition.wav");
+	music->Load(AUDIO_ID::Morning_Sun_Kamoking, "resources/Morning_Sun_Kamoking.wav");
+	music->Load(AUDIO_ID::In_Sorrow_And_Pains_Mirera, "resources/In_Sorrow_And_Pains_Mirera.wav");
+	music->Load(AUDIO_ID::Piercing_Wind, "resources/Piercing_Wind.wav");
+	music->Load(AUDIO_ID::Touch_Menu, "resources/Touch_Menu.wav");
+	music->Load(AUDIO_ID::Click_Menu, "resources/Click_Menu.wav");
+	music->Load(AUDIO_ID::Back_Menu, "resources/Back_Menu.wav");
+	music->Load(AUDIO_ID::Touch_Check_Menu, "resources/Touch_Check_Menu.wav");
+	music->Load(AUDIO_ID::Click_Check_Menu, "resources/Click_Check_Menu.wav");
+	music->Load(AUDIO_ID::Touch_Option_Menu, "resources/Touch_Option_Menu.wav");
+	music->Play(AUDIO_ID::Arial_City, true);
 
 	first_menu.LoadBitmapByString({ "resources/first_menu.bmp" });
 	first_menu.SetTopLeft(420, 340);
@@ -435,6 +457,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		"resources/fire_30_lt.bmp", "resources/fire_31_lt.bmp", "resources/fire_32_lt.bmp", "resources/fire_33_lt.bmp", "resources/fire_34_lt.bmp", "resources/fire_35_lt.bmp",
 		"resources/fire_36_lt.bmp", "resources/fire_37_lt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
+	fire[0].SetFrameIndexOfBitmap(37);
 	fire[0].SetAnimation(16, true);
 	fire[0].SetTopLeft(670, 78);
 
@@ -446,6 +469,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_30_rt.bmp", "resources/fire_31_rt.bmp", "resources/fire_32_rt.bmp", "resources/fire_33_rt.bmp", "resources/fire_34_rt.bmp", "resources/fire_35_lt.bmp",
 	"resources/fire_36_rt.bmp", "resources/fire_37_rt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
+	fire[1].SetFrameIndexOfBitmap(37);
 	fire[1].SetAnimation(16, true);
 	fire[1].SetTopLeft(1050, 78);
 
@@ -457,6 +481,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_30_lb.bmp", "resources/fire_31_lb.bmp", "resources/fire_32_lb.bmp", "resources/fire_33_lb.bmp", "resources/fire_34_lb.bmp", "resources/fire_35_lb.bmp",
 	"resources/fire_36_lb.bmp", "resources/fire_37_lb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
+	fire[2].SetFrameIndexOfBitmap(37);
 	fire[2].SetAnimation(16, true);
 	fire[2].SetTopLeft(670, 870);
 
@@ -468,6 +493,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_30_rb.bmp", "resources/fire_31_rb.bmp", "resources/fire_32_rb.bmp", "resources/fire_33_rb.bmp", "resources/fire_34_rb.bmp", "resources/fire_35_rb.bmp",
 	"resources/fire_36_rb.bmp", "resources/fire_37_rb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
+	fire[3].SetFrameIndexOfBitmap(37);
 	fire[3].SetAnimation(16, true);
 	fire[3].SetTopLeft(1050, 870);
 	fire_animation = true;
@@ -475,17 +501,72 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	touch_option_menu_first = true;
 	touch_option_menu_selected = false;
 
-	game_time_interval = 500;
+	game_decline_time_interval = 1500;
+	game_move_time_interval = 100;
+	left_key_down = false;
+	right_key_down = false;
+	down_key_down = false;
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	
+	if (phase == 3)
+	{
+		if (sub_phase == 2)
+		{
+			if (nChar == VK_UP)
+			{
+				auto game_state = tetris_game.event_handler(Event::rotate);
+				vector<vector<Color>> canvas = game_state.canvas;
+				canvas_update(cube, canvas);
+			}
+			else if (nChar == VK_DOWN)
+			{
+				game_next_move_time = clock();
+				down_key_down = true;
+			}
+			else if (nChar == VK_LEFT)
+			{
+				game_next_move_time = clock();
+				left_key_down = true;
+				right_key_down = false;
+			}
+			else if (nChar == VK_RIGHT)
+			{
+				game_next_move_time = clock();
+				left_key_down = false;
+				right_key_down = true;
+			}
+			else if (nChar == VK_SPACE)
+			{
+				auto game_state = tetris_game.event_handler(Event::down);
+				vector<vector<Color>> canvas = game_state.canvas;
+				canvas_update(cube, canvas);
+			}
+		}
+	}
 }
 
 void CGameStateRun::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	
+	if (phase == 3)
+	{
+		if (sub_phase == 2)
+		{
+			if (nChar == VK_LEFT)
+			{
+				left_key_down = false;
+			}
+			else if (nChar == VK_RIGHT)
+			{
+				right_key_down = false;
+			}
+			else if (nChar == VK_DOWN)
+			{
+				down_key_down = false;
+			}
+		}
+	}
 }
 
 void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的動作
@@ -502,7 +583,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 	{
 		if (click_check(nFlags, point, back))
 		{
-			music->Play(8);
+			music->Play(AUDIO_ID::Back_Menu);
 			tittle.SetFrameIndexOfBitmap(0);
 			back.SetFrameIndexOfBitmap(0);
 			back_selected = false;
@@ -514,7 +595,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		{
 			if (click_check(nFlags, point, second_menu[i]))
 			{
-				music->Play(7);
+				music->Play(AUDIO_ID::Click_Menu);
 				tittle.SetFrameIndexOfBitmap(i + 2);
 				game_mode.SetFrameIndexOfBitmap(i + 1);
 				id = i;
@@ -530,7 +611,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		{
 			if (click_check(nFlags, point, back))
 			{
-				music->Play(8);
+				music->Play(AUDIO_ID::Back_Menu);
 				tittle.SetFrameIndexOfBitmap(1);
 				back.SetFrameIndexOfBitmap(0);
 				start[id].SetAnimation(60, true);
@@ -539,12 +620,13 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[0]))
 			{
-				music->Play(7);
-				music->Stop(0);
+				music->Play(AUDIO_ID::Click_Menu);
+				music->Stop(AUDIO_ID::Arial_City);
 				music->Play(rand() % 6, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
 				fire_animation = true;
-				game_action_next_time = clock();
+				game_next_decline_time = clock();
+				game_next_move_time = clock();
 				sub_phase = 2;
 			}
 			for (int i = 0; i < 4; i++)
@@ -570,7 +652,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		{
 			if (click_check(nFlags, point, back))
 			{
-				music->Play(8);
+				music->Play(AUDIO_ID::Back_Menu);
 				tittle.SetFrameIndexOfBitmap(1);
 				back.SetFrameIndexOfBitmap(0);
 				start[id].SetAnimation(60, true);
@@ -580,18 +662,19 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[1]))
 			{
-				music->Play(7);
-				music->Stop(0);
+				music->Play(AUDIO_ID::Click_Menu);
+				music->Stop(AUDIO_ID::Arial_City);
 				music->Play(rand() % 6, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
-				game_action_next_time = clock();
+				game_next_decline_time = clock();
+				game_next_move_time = clock();
 				sub_phase = 2;
 			}
 			for (int i = 0; i < 4; i++)
 			{
 				if (click_check(nFlags, point, blitz_menu_check[i]))
 				{
-					music->Play(10);
+					music->Play(AUDIO_ID::Click_Check_Menu);
 					if (blitz_menu_check[i].GetFrameIndexOfBitmap() == 0)
 					{
 						blitz_menu_check[i].SetFrameIndexOfBitmap(1);
@@ -610,7 +693,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		{
 			if (click_check(nFlags, point, back))
 			{
-				music->Play(8);
+				music->Play(AUDIO_ID::Back_Menu);
 				tittle.SetFrameIndexOfBitmap(1);
 				back.SetFrameIndexOfBitmap(0);
 				start[id].SetAnimation(60, true);
@@ -620,11 +703,12 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[2]))
 			{
-				music->Play(7);
-				music->Stop(0);
+				music->Play(AUDIO_ID::Click_Menu);
+				music->Stop(AUDIO_ID::Arial_City);
 				music->Play(rand() % 6, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
-				game_action_next_time = clock();
+				game_next_decline_time = clock();
+				game_next_move_time = clock();
 				sub_phase = 2;
 			}
 		}

@@ -64,9 +64,18 @@ namespace game_framework {
 	/////////////////////////////////////////////////////////////////////////////
 
 	enum AUDIO_ID {				// 定義各種音效的編號
-		AUDIO_DING,				// 0
-		AUDIO_LAKE,				// 1
-		AUDIO_NTUT				// 2
+		Arial_City,
+		To_The_Limit,
+		The_Great_Eastern_Expedition,
+		Morning_Sun_Kamoking,
+		In_Sorrow_And_Pains_Mirera,
+		Piercing_Wind,
+		Touch_Menu,
+		Click_Menu,
+		Back_Menu,
+		Touch_Check_Menu,
+		Click_Check_Menu,
+		Touch_Option_Menu
 	};
 
 	enum Color
@@ -101,7 +110,7 @@ namespace game_framework {
 	class Tromino
 	{
 	public:
-		int x = 3;
+		int x;
 		int y;
 		Color color;
 		TrominoMatrix matrix;
@@ -109,6 +118,7 @@ namespace game_framework {
 		Tromino(Color color, TrominoMatrix matrix)
 			: color(color), matrix(matrix)
 		{
+			x = (CANVAS_WIDTH - matrix[0].size()) / 2;
 			y = -height() + 1;
 		}
 
@@ -118,12 +128,12 @@ namespace game_framework {
 			TrominoMatrix matrix;
 
 			int tromino_type_count = 7;
-			int random_number = rand() % (7 + 1);
+			int random_number = rand();
 
 			// https://tetris.wiki/Tetromino#The_basic_tetrominoes
 			if (random_number % tromino_type_count == 0)
 			{
-				color = Color::blue;
+				color = Color::light_blue;
 				matrix = {
 					{1, 1, 1, 1},
 				};
@@ -144,7 +154,7 @@ namespace game_framework {
 					{1, 1, 1},
 				};
 			}
-			else if (random_number % tromino_type_count == 2)
+			else if (random_number % tromino_type_count == 3)
 			{
 				color = Color::green;
 				matrix = {
@@ -152,7 +162,7 @@ namespace game_framework {
 					{1, 1, 0},
 				};
 			}
-			else if (random_number % tromino_type_count == 2)
+			else if (random_number % tromino_type_count == 4)
 			{
 				color = Color::red;
 				matrix = {
@@ -160,7 +170,7 @@ namespace game_framework {
 					{0, 1, 1},
 				};
 			}
-			else if (random_number % tromino_type_count == 2)
+			else if (random_number % tromino_type_count == 5)
 			{
 				color = Color::blue;
 				matrix = {
@@ -237,7 +247,7 @@ namespace game_framework {
 				{
 					event_handler(Event::tick);
 					if (!this->active_tromino.has_value())
-						return { this->canvas,false };
+						return { this->canvas, false };
 				}
 			}
 			if (event == Event::rotate)
@@ -295,17 +305,17 @@ namespace game_framework {
 
 				// Check if game is over
 				// The first and secord row is transparent and for preview purposes only, thus not counted as a row
-				if (
+				/*if ( 這幾行不寫就可以執行
 					find_if(
 						this->canvas[PREVIEW_ROW_COUNT + 1].begin(),
 						this->canvas[PREVIEW_ROW_COUNT + 1].end(),
-						[](Color color) { return color != Color::black; }) != this->canvas[1].end())
+						[](Color color){ return color != Color::black; }) != this->canvas[1].end())
 				{
-					return { this->canvas,true };
-				}
+					return { this->canvas, true };
+				}*/
 			}
 
-			return { this->canvas,false };
+			return { this->canvas, false };
 		}
 
 		bool reached_bottom()
@@ -424,8 +434,13 @@ namespace game_framework {
 		vector<CMovingBitmap> fire = vector<CMovingBitmap>(4);
 
 		TetrisGame tetris_game;
-		int game_action_next_time;
-		int game_time_interval;
+		int game_next_decline_time;
+		int game_decline_time_interval;
+		int game_next_move_time;
+		int game_move_time_interval;
+		bool left_key_down;
+		bool right_key_down;
+		bool down_key_down;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
