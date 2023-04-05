@@ -19,7 +19,7 @@ bool fire_animation = true;
 
 int speed = 4;
 
-bool click_check(UINT nFlags, CPoint point, CMovingBitmap character)
+bool CGameStateRun::click_check(UINT nFlags, CPoint point, CMovingBitmap character)
 {
 	if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth()
 		&& point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight()
@@ -30,7 +30,7 @@ bool click_check(UINT nFlags, CPoint point, CMovingBitmap character)
 	return false;
 }
 
-bool touch_check(CPoint point, CMovingBitmap character)
+bool CGameStateRun::touch_check(CPoint point, CMovingBitmap character)
 {
 	if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth()
 		&& point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight())
@@ -40,7 +40,7 @@ bool touch_check(CPoint point, CMovingBitmap character)
 	return false;
 }
 
-void touch_option_menu(CPoint point, bool& touch_option_menu_selected)
+void CGameStateRun::touch_option_menu(CPoint point)
 {
 	if (point.x >= 270 && point.x <= 1655)
 	{
@@ -71,41 +71,51 @@ void touch_option_menu(CPoint point, bool& touch_option_menu_selected)
 	}
 }
 
-CMovingBitmap Cube()
+CMovingBitmap CGameStateRun::Cube()
 {
 	CMovingBitmap cube;
 	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_light_blue.bmp", "resources/cube_yellow.bmp", "resources/cube_purple.bmp",  "resources/cube_green.bmp",
-		"resources/cube_red.bmp", "resources/cube_blue.bmp",  "resources/cube_orange.bmp" });
+		"resources/cube_red.bmp", "resources/cube_blue.bmp",  "resources/cube_orange.bmp", "resources/cube_grey.bmp" });
 	cube.LoadBitmapByString({ "resources/cube_transparent.bmp" }, RGB(255, 255, 255));
 	return cube;
 }
 
-void display_game(vector<vector<CMovingBitmap>>& cube, vector<vector<CMovingBitmap>>& cube_next,  CMovingBitmap cube_place)
+void CGameStateRun::display_game()
 {
 
 	cube_place.ShowBitmap();
 
-	for (int i = 0; i < 22; i++)
+	for (int i = 0; i < CANVAS_HEIGHT; i++)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < CANVAS_WIDTH; j++)
 		{
 			cube[i][j].ShowBitmap();
 		}
 	}
 
-	for (int i = 0; i < 14; i++)
+	for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
 	{
-		for (int j = 0; j < 4; j++)
+		for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
 		{
 			cube_next[i][j].ShowBitmap();
 		}
 	}
+
+	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
+		{
+			cube_hold[i][j].ShowBitmap();
+		}
+	}
 }
 
-bool game_over_animation(vector<vector<CMovingBitmap>>& cube, vector<vector<CMovingBitmap>>& cube_next, CMovingBitmap &cube_place, vector<CMovingBitmap> &fire, bool& fire_animation)
+bool  CGameStateRun::game_over_animation()
 {
+	cube_place.SetFrameIndexOfBitmap(1);
 	if (fire_animation)
 	{
+		music->Play(AUDIO_ID::Game_Over);
 		for (int i = 0; i < 4; i++)
 		{
 			fire[i].ToggleAnimation();
@@ -116,18 +126,25 @@ bool game_over_animation(vector<vector<CMovingBitmap>>& cube, vector<vector<CMov
 	{
 		if (cube[0][0].GetTop() < 1080)
 		{
-			for (int i = 0; i < 22; i++)
+			for (int i = 0; i < CANVAS_HEIGHT; i++)
 			{
-				for (int j = 0; j < 10; j++)
+				for (int j = 0; j < CANVAS_WIDTH; j++)
 				{
 					cube[i][j].SetTopLeft(cube[i][j].GetLeft(), cube[i][j].GetTop() + speed);
 				}
 			}
-			for (int i = 0; i < 14; i++)
+			for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
 			{
-				for (int j = 0; j < 4; j++)
+				for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
 				{
 					cube_next[i][j].SetTopLeft(cube_next[i][j].GetLeft(), cube_next[i][j].GetTop() + speed);
+				}
+			}
+			for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
+			{
+				for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
+				{
+					cube_hold[i][j].SetTopLeft(cube_hold[i][j].GetLeft(), cube_hold[i][j].GetTop() + speed);
 				}
 			}
 			cube_place.SetTopLeft(cube_place.GetLeft(), cube_place.GetTop() + speed);
@@ -138,19 +155,20 @@ bool game_over_animation(vector<vector<CMovingBitmap>>& cube, vector<vector<CMov
 		}
 		else
 		{
-			for (int i = 0; i < 4; i++)
-			{
-				fire[i].SetFrameIndexOfBitmap(0);
-			}
-			return true;
+			return false;
 		}
 	}
-	return false;
+	return true;
 }
 
-void game_init(vector<vector<CMovingBitmap>>& cube, vector<vector<CMovingBitmap>>& cube_next, CMovingBitmap &cube_place, vector<CMovingBitmap> &fire, bool& fire_animation)
+void CGameStateRun::game_init()
 {
+	left_key_down = false;
+	right_key_down = false;
+	down_key_down = false;
+	game_over = false;
 	fire_animation = true;
+	cube_place.SetFrameIndexOfBitmap(0);
 	for (int i = 0; i < 22; i++)
 	{
 		for (int j = 0; j < 10; j++)
@@ -162,16 +180,27 @@ void game_init(vector<vector<CMovingBitmap>>& cube, vector<vector<CMovingBitmap>
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			cube_next[i][j] = Cube();
 			cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
-			cube_next[i][j].SetFrameIndexOfBitmap(2);
 		}
 	}
+	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
+		{
+			cube_hold[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
+		}
+	}
+	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
+	{
+		fire.SetFrameIndexOfBitmap(0);
+	});
 	cube_place.SetTopLeft(618, 224);
 }
 
-void canvas_update(vector<vector<CMovingBitmap>>& cube, vector<vector<Color>> &canvas)
+bool CGameStateRun::canvas_update(Event event)
 {
+	auto game_state = tetris_game.event_handler(event);
+	Canvas canvas = game_state.canvas;
 	for (int i = 0; i < CANVAS_HEIGHT; i++)
 	{
 		for (int j = 0; j < CANVAS_WIDTH; j++)
@@ -186,6 +215,28 @@ void canvas_update(vector<vector<CMovingBitmap>>& cube, vector<vector<Color>> &c
 			}
 		}
 	}
+
+	Canvas place_canvas = tetris_game.place_cube_canvas;
+	for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
+		{
+			cube_next[i][j].SetFrameIndexOfBitmap(place_canvas[i][j]);
+		}
+	}
+
+	Canvas hold_canvas = tetris_game.hold_cube_canvas;
+	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
+		{
+			cube_hold[i][j].SetFrameIndexOfBitmap(hold_canvas[i][j]);
+		}
+	}
+
+	return game_state.game_over;
+
+
 }
 
 CGameStateRun::CGameStateRun(CGame *g) : CGameState(g)
@@ -258,34 +309,41 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 		}
 		else if (sub_phase == 2)
 		{
-			if (game_next_decline_time <= clock())
+			if (!game_over)
 			{
-				auto game_state = tetris_game.event_handler(Event::tick);
-				vector<vector<Color>> canvas = game_state.canvas;
-				canvas_update(cube, canvas);
-				game_next_decline_time = clock() + game_decline_time_interval;
+				if (game_next_decline_time <= clock())
+				{
+					game_over = canvas_update(Event::tick);
+					game_next_decline_time = clock() + game_decline_time_interval;
+				}
+				if (game_next_move_time <= clock())
+				{
+					if (left_key_down)
+					{
+						music->Play(AUDIO_ID::Cube_Horizontal_Move);
+						game_over = canvas_update(Event::left);
+					}
+					if (right_key_down)
+					{
+						music->Play(AUDIO_ID::Cube_Horizontal_Move);
+						game_over = canvas_update(Event::right);
+					}
+					if (down_key_down)
+					{
+						music->Play(AUDIO_ID::Cube_Decline_Move);
+						game_over = canvas_update(Event::tick);
+					}
+					game_next_move_time = clock() + game_move_time_interval;
+				}
 			}
-			if (game_next_move_time <= clock())
+			else
 			{
-				if (left_key_down)
+				if (!game_over_animation())
 				{
-					auto game_state = tetris_game.event_handler(Event::left);
-					vector<vector<Color>> canvas = game_state.canvas;
-					canvas_update(cube, canvas);
+					music->Stop(audio_id);
+					music->Play(AUDIO_ID::Arial_City);
+					sub_phase = 1;
 				}
-				if (right_key_down)
-				{
-					auto game_state = tetris_game.event_handler(Event::right);
-					vector<vector<Color>> canvas = game_state.canvas;
-					canvas_update(cube, canvas);
-				}
-				if (down_key_down)
-				{
-					auto game_state = tetris_game.event_handler(Event::tick);
-					vector<vector<Color>> canvas = game_state.canvas;
-					canvas_update(cube, canvas);
-				}
-				game_next_move_time = clock() + game_move_time_interval;
 			}
 		}
 	}
@@ -328,6 +386,11 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Touch_Check_Menu, "resources/Touch_Check_Menu.wav");
 	music->Load(AUDIO_ID::Click_Check_Menu, "resources/Click_Check_Menu.wav");
 	music->Load(AUDIO_ID::Touch_Option_Menu, "resources/Touch_Option_Menu.wav");
+	music->Load(AUDIO_ID::Cube_Rotate, "resources/Cube_Rotate.wav");
+	music->Load(AUDIO_ID::Cube_Horizontal_Move, "resources/Cube_Horizontal_Move.wav");
+	music->Load(AUDIO_ID::Cube_Decline_Move, "resources/Cube_Decline_Move.wav");
+	music->Load(AUDIO_ID::Game_Over, "resources/Game_Over.wav");
+
 	music->Play(AUDIO_ID::Arial_City, true);
 
 	first_menu.LoadBitmapByString({ "resources/first_menu.bmp" });
@@ -366,19 +429,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	game_mode.LoadBitmapByString({ "resources/game_mode.bmp", "resources/40l_press_start.bmp",  "resources/blitz_press_start.bmp",  "resources/zen_press_start.bmp" });
 	game_mode.SetTopLeft(0, 940);
-
-	for (int i = 0; i < 22; i++)
-	{
-		for (int j = 0; j < 10; j++)
-		{
-			cube[i][j] = Cube();
-			cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
-			if (i < 2)
-			{
-				cube[i][j].SetFrameIndexOfBitmap(8);
-			}
-		}
-	}
 
 	fourtyl_menu[0].LoadBitmapByString({ "resources/40l_information.bmp" });
 	fourtyl_menu[0].SetTopLeft(270, 100);
@@ -438,16 +488,41 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	
 	cube_place.LoadBitmapByString({ "resources/cube_place.bmp", "resources/cube_place_game_over.bmp" }, RGB(0, 0, 255));
 	cube_place.SetTopLeft(618, 224);
-
-	for (int i = 0; i < 14; i++)
+	
+	for (int i = 0; i < CANVAS_HEIGHT; i++)
 	{
-		for (int j = 0; j < 4; j++)
+		for (int j = 0; j < CANVAS_WIDTH; j++)
+		{
+			cube[i][j] = Cube();
+			cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
+			if (i < 2)
+			{
+				cube[i][j].SetFrameIndexOfBitmap(Color::transparent);
+			}
+		}
+	}
+
+	for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
 		{
 			cube_next[i][j] = Cube();
 			cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
-			cube_next[i][j].SetFrameIndexOfBitmap(2);
+			cube_next[i][j].SetFrameIndexOfBitmap(Color::transparent);
 		}
 	}
+
+	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
+		{
+			cube_hold[i][j] = Cube();
+			cube_hold[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
+			cube_hold[i][j].SetFrameIndexOfBitmap(Color::yellow);
+		}
+	}
+
+
 
 	fire[0].LoadBitmapByString({ "resources/fire_1_lt.bmp", "resources/fire_2_lt.bmp", "resources/fire_3_lt.bmp", "resources/fire_4_lt.bmp", "resources/fire_5_lt.bmp",
 		"resources/fire_6_lt.bmp", "resources/fire_7_lt.bmp", "resources/fire_8_lt.bmp", "resources/fire_9_lt.bmp", "resources/fire_10_lt.bmp", "resources/fire_11_lt.bmp",
@@ -457,7 +532,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		"resources/fire_30_lt.bmp", "resources/fire_31_lt.bmp", "resources/fire_32_lt.bmp", "resources/fire_33_lt.bmp", "resources/fire_34_lt.bmp", "resources/fire_35_lt.bmp",
 		"resources/fire_36_lt.bmp", "resources/fire_37_lt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
-	fire[0].SetFrameIndexOfBitmap(37);
 	fire[0].SetAnimation(16, true);
 	fire[0].SetTopLeft(670, 78);
 
@@ -469,7 +543,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_30_rt.bmp", "resources/fire_31_rt.bmp", "resources/fire_32_rt.bmp", "resources/fire_33_rt.bmp", "resources/fire_34_rt.bmp", "resources/fire_35_lt.bmp",
 	"resources/fire_36_rt.bmp", "resources/fire_37_rt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
-	fire[1].SetFrameIndexOfBitmap(37);
 	fire[1].SetAnimation(16, true);
 	fire[1].SetTopLeft(1050, 78);
 
@@ -481,7 +554,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_30_lb.bmp", "resources/fire_31_lb.bmp", "resources/fire_32_lb.bmp", "resources/fire_33_lb.bmp", "resources/fire_34_lb.bmp", "resources/fire_35_lb.bmp",
 	"resources/fire_36_lb.bmp", "resources/fire_37_lb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
-	fire[2].SetFrameIndexOfBitmap(37);
 	fire[2].SetAnimation(16, true);
 	fire[2].SetTopLeft(670, 870);
 
@@ -493,7 +565,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_30_rb.bmp", "resources/fire_31_rb.bmp", "resources/fire_32_rb.bmp", "resources/fire_33_rb.bmp", "resources/fire_34_rb.bmp", "resources/fire_35_rb.bmp",
 	"resources/fire_36_rb.bmp", "resources/fire_37_rb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
-	fire[3].SetFrameIndexOfBitmap(37);
 	fire[3].SetAnimation(16, true);
 	fire[3].SetTopLeft(1050, 870);
 	fire_animation = true;
@@ -506,6 +577,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	left_key_down = false;
 	right_key_down = false;
 	down_key_down = false;
+	game_over = false;
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -514,34 +586,39 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{
 		if (sub_phase == 2)
 		{
-			if (nChar == VK_UP)
+			if (!game_over)
 			{
-				auto game_state = tetris_game.event_handler(Event::rotate);
-				vector<vector<Color>> canvas = game_state.canvas;
-				canvas_update(cube, canvas);
-			}
-			else if (nChar == VK_DOWN)
-			{
-				game_next_move_time = clock();
-				down_key_down = true;
-			}
-			else if (nChar == VK_LEFT)
-			{
-				game_next_move_time = clock();
-				left_key_down = true;
-				right_key_down = false;
-			}
-			else if (nChar == VK_RIGHT)
-			{
-				game_next_move_time = clock();
-				left_key_down = false;
-				right_key_down = true;
-			}
-			else if (nChar == VK_SPACE)
-			{
-				auto game_state = tetris_game.event_handler(Event::down);
-				vector<vector<Color>> canvas = game_state.canvas;
-				canvas_update(cube, canvas);
+				if (nChar == VK_UP)
+				{
+					music->Play(AUDIO_ID::Cube_Rotate);
+					canvas_update(Event::rotate);
+				}
+				else if (nChar == VK_DOWN)
+				{
+					game_next_move_time = clock();
+					down_key_down = true;
+				}
+				else if (nChar == VK_LEFT)
+				{
+					game_next_move_time = clock();
+					left_key_down = true;
+					right_key_down = false;
+				}
+				else if (nChar == VK_RIGHT)
+				{
+					game_next_move_time = clock();
+					left_key_down = false;
+					right_key_down = true;
+				}
+				else if (nChar == VK_SPACE)
+				{
+					canvas_update(Event::down);
+					canvas_update(Event::tick);
+				}
+				else if (nChar == 0x43)
+				{
+					canvas_update(Event::hold);
+				}
 			}
 		}
 	}
@@ -620,10 +697,13 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[0]))
 			{
+				audio_id = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(rand() % 6, true);
+				music->Play(audio_id, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
+				game_init();
+				tetris_game = TetrisGame();
 				fire_animation = true;
 				game_next_decline_time = clock();
 				game_next_move_time = clock();
@@ -754,14 +834,14 @@ void CGameStateRun::OnMouseMove(UINT nFlags, CPoint point)	// 處理滑鼠的動
 	{
 		if (sub_phase == 1)
 		{
-			touch_option_menu(point, touch_option_menu_selected);
+			touch_option_menu(point);
 		}
 	}
 	if (phase == 4)
 	{
 		if (sub_phase == 1)
 		{
-			touch_option_menu(point, touch_option_menu_selected);
+			touch_option_menu(point);
 		}
 	}
 }
@@ -838,12 +918,15 @@ void CGameStateRun::OnShow()
 		{
 			background.ShowBitmap();
 
-			display_game(cube, cube_next, cube_place);
+			display_game();
 
-			fire[0].ShowBitmap();
-			fire[1].ShowBitmap();
-			fire[2].ShowBitmap();
-			fire[3].ShowBitmap();
+			if (game_over)
+			{
+				for_each(fire.begin(), fire.end(), [](CMovingBitmap& fire)
+				{
+					fire.ShowBitmap();
+				});
+			}
 		}
 	}
 	else if (phase == 4)
@@ -870,7 +953,7 @@ void CGameStateRun::OnShow()
 		{
 			background.ShowBitmap();
 
-			display_game(cube, cube_next,  cube_place);
+			display_game();
 		}
 	}
 	else if (phase == 5)
@@ -892,7 +975,7 @@ void CGameStateRun::OnShow()
 		{
 			background.ShowBitmap();
 
-			display_game(cube, cube_next, cube_place);
+			display_game();
 		}
 	}
 	else if (phase == 6)
