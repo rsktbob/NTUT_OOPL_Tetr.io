@@ -270,8 +270,8 @@ namespace game_framework {
 				return Color::orange;
 			}
 		}
-
-		TrominoMatrix according_color_return_matrix()
+		
+TrominoMatrix according_color_return_matrix()
 		{
 			switch (color)
 			{
@@ -305,7 +305,7 @@ namespace game_framework {
 	public:
 		int score;
 		optional<Tromino> active_tromino;
-		deque<Tromino> next_tromino_array = { Tromino::random_tromino(), Tromino::random_tromino(), Tromino::random_tromino(), Tromino::random_tromino(), Tromino::random_tromino() };
+		deque<Tromino> next_tromino_array = {Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino() };
 		optional<Tromino> hold_tromino;
 		Canvas canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
 		Canvas place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
@@ -601,7 +601,7 @@ namespace game_framework {
 		bool game_over_animation();
 		void display_game();
 		void game_init();
-		bool game_update(Event event);
+		void game_update(Event event);
 		CMovingBitmap Cube();
 	protected:
 		void OnMove();									// 移動遊戲元素
@@ -636,6 +636,9 @@ namespace game_framework {
 		vector<CMovingBitmap> fourtyl_menu = vector<CMovingBitmap>(4);
 		vector<CMovingBitmap> fourtyl_menu_check = vector<CMovingBitmap>(4);
 
+		vector<CMovingBitmap> fourtyl_end_menu = vector<CMovingBitmap>(2);
+		CMovingBitmap fourtyl_again;
+
 		vector<CMovingBitmap> blitz_menu = vector<CMovingBitmap>(4);
 		vector<CMovingBitmap> blitz_menu_check = vector<CMovingBitmap>(4);
 
@@ -665,7 +668,15 @@ namespace game_framework {
 		CMovingBitmap back_to_tittle;
 		bool back_to_tittle_selected;
 
-		int speed;
+		int game_lines;
+		int game_init_time;
+		int game_end_time;
+
+		char lines_display[6] = {};
+		char time_display_front[10] = {};
+		char time_display_back[5] = {};
+		char end_time_display_front[10] = {};
+		char end_time_display_back[5] = {};
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
