@@ -6,6 +6,7 @@
 #include "../Library/gameutil.h"
 #include "../Library/gamecore.h"
 #include "mygame.h"
+#include <ctime>
 
 using namespace game_framework;
 
@@ -80,29 +81,30 @@ void CGameStateRun::display_game()
 {
 	if (!game_over)
 	{
-		sprintf(lines_display, "%02d/", game_lines);
+		game_lines_displacement = game_lines < 10 ? 0 : 20;
+		sprintf(lines_display, "%d", game_lines);
 
-		unsigned current_time = clock() - game_init_time;
-		unsigned minutes = current_time / 60000;
-		unsigned seconds = (current_time / 1000) % 60;
-		unsigned milliseconds = current_time % 1000;
-		sprintf(time_display_front, "%02d:%02d", minutes, seconds);
-		sprintf(time_display_back, ".%03d", milliseconds);
+		game_current_time = clock() - game_init_time;
+		game_minutes = game_current_time / 60000;
+		game_seconds = (game_current_time / 1000) % 60;
+		game_milliseconds = game_current_time % 1000;
+		sprintf(time_display_front, "%d:%02d", game_minutes, game_seconds);
+		sprintf(time_display_back, ".%03d", game_milliseconds);
 		CDC *pDC = CDDraw::GetBackCDC();
 
-		CTextDraw::ChangeFontLog(pDC, 25, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 720, 731, "Lines");
-		CTextDraw::ChangeFontLog(pDC, 39, "微軟正黑體", RGB(255, 255, 255), 200);
-		CTextDraw::Print(pDC, 705, 755, lines_display);
-		CTextDraw::ChangeFontLog(pDC, 25, "微軟正黑體", RGB(255, 255, 255), 200);
-		CTextDraw::Print(pDC, 755, 765, "40");
+		CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
+		CTextDraw::Print(pDC, 710, 715, "LINES");
+		CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", RGB(255, 255, 255), 200);
+		CTextDraw::Print(pDC, 707-game_lines_displacement, 740, lines_display);
+		CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", RGB(255, 255, 255), 200);
+		CTextDraw::Print(pDC, 733, 754, "/40");
 
-		CTextDraw::ChangeFontLog(pDC, 25, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 723, 806, "Time");
-		CTextDraw::ChangeFontLog(pDC, 39, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 636, 830, time_display_front);
-		CTextDraw::ChangeFontLog(pDC, 25, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 732, 843, time_display_back);
+		CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
+		CTextDraw::Print(pDC, 718, 800, "TIME");
+		CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", RGB(255, 255, 255), 50);
+		CTextDraw::Print(pDC, 630, 825, time_display_front);
+		CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", RGB(255, 255, 255), 50);
+		CTextDraw::Print(pDC, 715, 838, time_display_back);
 
 		CDDraw::ReleaseBackCDC();
 	}
@@ -189,10 +191,8 @@ void CGameStateRun::game_init()
 	fire_animation = true;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place.SetFrameIndexOfBitmap(0);
-	game_lines = 0;
 	tetris_game = TetrisGame();
 	game_init_time = clock();
-	game_end_time = 0;
 	game_next_decline_time = clock();
 	game_next_move_time = clock();
 	for (int i = 0; i < 22; i++)
@@ -362,19 +362,26 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 				if (game_lines >= 6)
 				{
 					music->Stop(audio_id);
-					
+				
+					now = time(0);
+					tm *gmtm = gmtime(&now);
 
-					unsigned current_time = clock() - game_init_time;
-					unsigned minutes = current_time / 60000;
-					unsigned seconds = (current_time / 1000) % 60;
-					unsigned milliseconds = current_time % 1000;
+					int real_time_year = gmtm->tm_year + 1900;
+					int real_time_month = gmtm->tm_mon;
+					int real_time_day = gmtm->tm_mday;
 
-					sprintf(end_time_display_front, "%02d:%02d", minutes, seconds);
-					sprintf(end_time_display_back, ".%03d", milliseconds);
+					int real_time_hour = gmtm->tm_hour;
+					int real_time_min = gmtm->tm_min;
+					int real_time_sec = gmtm->tm_sec;
+
+					game_end_time_displacement = game_minutes >= 10 ? 35 : 0;
+
+					sprintf(end_time_display_front, "%d:%02d", game_minutes, game_seconds);
+					sprintf(end_time_display_back, ".%03d", game_milliseconds);
+					sprintf(real_time_display, "%d/%d/%d  %d:%d:%d", real_time_year, real_time_month, real_time_day, real_time_hour, real_time_min, real_time_sec);
 
 					tittle.SetFrameIndexOfBitmap(5);
 					fourtyl_again.SetAnimation(60, false);
-					game_end_time = clock() - game_init_time;
 					sub_phase = 4;
 				}
 			}
@@ -417,6 +424,23 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 			{
 				touch_menu_check_first = true;
 				back_to_tittle.SetTopLeft(back_to_tittle.GetLeft() + 10, 200);
+			}
+		}
+		else if (sub_phase == 4)
+		{
+			if (back.GetLeft() < 0 && back_selected)
+			{
+				if (touch_menu_check_first)
+				{
+					music->Play(AUDIO_ID::Touch_Menu);
+					touch_menu_check_first = false;
+				}
+				back.SetTopLeft(back.GetLeft() + 10, 80);
+			}
+			else if (back.GetLeft() > -40 && !back_selected)
+			{
+				touch_menu_check_first = true;
+				back.SetTopLeft(back.GetLeft() - 10, 80);
 			}
 		}
 	}
@@ -523,6 +547,9 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	fourtyl_end_menu[1].LoadBitmapByString({ "resources/40l_music.bmp" });
 	fourtyl_end_menu[1].SetTopLeft(270, 358);
 
+	fourtyl_end_menu[2].LoadBitmapByString({ "resources/40l_model.bmp" });
+	fourtyl_end_menu[2].SetTopLeft(0, 960);
+
 	fourtyl_again.LoadBitmapByString({ "resources/40l_again_1.bmp", "resources/40l_again_2.bmp", "resources/40l_again_3.bmp", "resources/40l_again_4.bmp", "resources/40l_again_5.bmp",
 		"resources/40l_again_6.bmp", "resources/40l_again_7.bmp", "resources/40l_again_8.bmp", "resources/40l_again_7.bmp", "resources/40l_again_6.bmp", "resources/40l_again_5.bmp",
 		"resources/40l_again_4.bmp" , "resources/40l_again_3.bmp" , "resources/40l_again_2.bmp" });
@@ -577,17 +604,12 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	
 	cube_place.LoadBitmapByString({ "resources/cube_place.bmp", "resources/cube_place_game_over.bmp" }, RGB(0, 0, 255));
 	cube_place.SetTopLeft(618, 224);
-	
+
 	for (int i = 0; i < CANVAS_HEIGHT; i++)
 	{
 		for (int j = 0; j < CANVAS_WIDTH; j++)
 		{
 			cube[i][j] = Cube();
-			cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
-			if (i < 2)
-			{
-				cube[i][j].SetFrameIndexOfBitmap(Color::transparent);
-			}
 		}
 	}
 
@@ -596,8 +618,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
 		{
 			cube_next[i][j] = Cube();
-			cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
-			cube_next[i][j].SetFrameIndexOfBitmap(Color::transparent);
 		}
 	}
 
@@ -606,11 +626,8 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 		{
 			cube_hold[i][j] = Cube();
-			cube_hold[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
-			cube_hold[i][j].SetFrameIndexOfBitmap(Color::yellow);
 		}
 	}
-
 
 
 	fire[0].LoadBitmapByString({ "resources/fire_1_lt.bmp", "resources/fire_2_lt.bmp", "resources/fire_3_lt.bmp", "resources/fire_4_lt.bmp", "resources/fire_5_lt.bmp",
@@ -793,7 +810,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				back.SetFrameIndexOfBitmap(0);
 				start[id].SetAnimation(60, true);
 				game_mode.SetFrameIndexOfBitmap(0);
-				phase = 2;;
+				phase = 2;
 			}
 			if (click_check(nFlags, point, start[0]))
 			{
@@ -846,6 +863,15 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				fourtyl_again.SetAnimation(60, true);
 				game_init();
 				sub_phase = 2;
+			}
+			if (click_check(nFlags, point, back))
+			{
+				music->Play(AUDIO_ID::Back_Menu);
+				tittle.SetFrameIndexOfBitmap(1);
+				back.SetFrameIndexOfBitmap(0);
+				start[id].SetAnimation(60, true);
+				game_mode.SetFrameIndexOfBitmap(0);
+				phase = 2;
 			}
 		}
 	}
@@ -1083,21 +1109,26 @@ void CGameStateRun::OnShow()
 		{
 			tittle.ShowBitmap();
 			
-			for (int i = 0; i < 2; i++)
+			for (unsigned i = 0; i < fourtyl_end_menu.size(); i++)
 			{
 				fourtyl_end_menu[i].ShowBitmap();
 			}
 
 			fourtyl_again.ShowBitmap();
 
+			back.ShowBitmap();
+
 			CDC *pDC = CDDraw::GetBackCDC();
 
 			CTextDraw::ChangeFontLog(pDC, 120, "微軟正黑體", RGB(244, 193, 155), 50);
-			CTextDraw::Print(pDC, 730, 180, end_time_display_front);
+			CTextDraw::Print(pDC, 765-game_end_time_displacement, 180, end_time_display_front);
 
 
 			CTextDraw::ChangeFontLog(pDC, 85, "微軟正黑體", RGB(244, 193, 155), 50);
-			CTextDraw::Print(pDC, 1025, 210, end_time_display_back);
+			CTextDraw::Print(pDC, 996+game_end_time_displacement, 210, end_time_display_back);
+
+			CTextDraw::ChangeFontLog(pDC, 30, "微軟正黑體", RGB(169, 117, 83), 50);
+			CTextDraw::Print(pDC, 200, 964, real_time_display);
 
 			CDDraw::ReleaseBackCDC();
 			

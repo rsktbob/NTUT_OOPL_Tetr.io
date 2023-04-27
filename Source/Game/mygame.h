@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <ctime>
 
 using namespace std;
 
@@ -636,7 +637,7 @@ TrominoMatrix according_color_return_matrix()
 		vector<CMovingBitmap> fourtyl_menu = vector<CMovingBitmap>(4);
 		vector<CMovingBitmap> fourtyl_menu_check = vector<CMovingBitmap>(4);
 
-		vector<CMovingBitmap> fourtyl_end_menu = vector<CMovingBitmap>(2);
+		vector<CMovingBitmap> fourtyl_end_menu = vector<CMovingBitmap>(3);
 		CMovingBitmap fourtyl_again;
 
 		vector<CMovingBitmap> blitz_menu = vector<CMovingBitmap>(4);
@@ -670,13 +671,25 @@ TrominoMatrix according_color_return_matrix()
 
 		int game_lines;
 		int game_init_time;
-		int game_end_time;
+
+		unsigned game_current_time;
+		unsigned game_minutes;
+		unsigned game_seconds;
+		unsigned game_milliseconds;
+
+		unsigned game_lines_displacement;
+		unsigned game_end_time_displacement;
+
+		unsigned real_time;
 
 		char lines_display[6] = {};
 		char time_display_front[10] = {};
 		char time_display_back[5] = {};
 		char end_time_display_front[10] = {};
 		char end_time_display_back[5] = {};
+		char real_time_display[80] = {};
+
+		time_t now;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
