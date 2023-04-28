@@ -124,9 +124,44 @@ namespace game_framework {
 	};
 
 	struct GameState {
+		int lines;
 		int score;
 		bool game_over;
 		Canvas canvas;
+		Canvas place_canvas;
+		Canvas hold_canvas;
+	};
+
+	enum class GameType {
+		fourtyl,
+		blitz,
+		zen
+	};
+
+	class Button : public CMovingBitmap
+	{
+	public:
+		bool is_clicked(UINT nFlags, CPoint point, CMovingBitmap character)
+		{
+			if (is_touched(point, character) && nFlags == VK_LBUTTON)
+			{
+				return true;
+			}
+			return false;
+		}
+		bool is_touched(CPoint point, CMovingBitmap character)
+		{
+			if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth()
+				&& point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight())
+			{
+				return true;
+			}
+			return false;
+		}
+		Button() : CMovingBitmap()
+		{
+
+		}
 	};
 
 	class Tromino
@@ -304,8 +339,9 @@ TrominoMatrix according_color_return_matrix()
 
 	class TetrisGame {
 	public:
-		int score;
-		optional<Tromino> active_tromino;
+		int lines = 0;
+		int score = 0;
+		optional<Tromino> active_tromino = Tromino::random_tromino();
 		deque<Tromino> next_tromino_array = {Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino() };
 		optional<Tromino> hold_tromino;
 		Canvas canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
@@ -318,6 +354,7 @@ TrominoMatrix according_color_return_matrix()
 			// Generate a new tromino if active_tromino is null
 			if (!this->active_tromino.has_value())
 			{
+				score += random_score();
 				if (hold_tromino.has_value())
 				{
 					hold_tromino->color = hold_tromino->according_matrix_return_color();
@@ -370,7 +407,7 @@ TrominoMatrix according_color_return_matrix()
 				game_over = is_game_over();
 			}
 
-			return {  score, game_over, canvas };
+			return {  lines, score, game_over, canvas, place_canvas, hold_canvas };
 		}
 
 		void remove_active_tromino_from_canvas() {
@@ -539,7 +576,8 @@ TrominoMatrix according_color_return_matrix()
 			for (unsigned row_index = 0; row_index < canvas.size(); row_index++) {
 				vector<Color> row = canvas[row_index];
 				if (all_of(row.begin(), row.end(), [](Color color) { return color != Color::black; })) {
-					score += CANVAS_WIDTH;
+					lines += 1;
+					score += 150;
 					canvas.erase(canvas.begin() + row_index);
 					canvas.insert(canvas.begin(), vector<Color>(CANVAS_WIDTH, Color::black));
 				}
@@ -557,6 +595,13 @@ TrominoMatrix according_color_return_matrix()
 				topmost_row.end(),
 				[](Color color) { return color != Color::black; }
 			);
+		}
+
+		int random_score()
+		{
+			int max = 80;
+			int min = 40;
+			return rand() % (max - min + 1) + min;
 		}
 	};
 
@@ -601,8 +646,13 @@ TrominoMatrix according_color_return_matrix()
 		void touch_option_menu(CPoint point);
 		bool game_over_animation();
 		void display_game();
+		void display_lines();
+		void display_time();
+		void display_score();
+		void display_level();
 		void game_init();
 		void game_update(Event event);
+		void game_model(GameType gametype);
 		CMovingBitmap Cube();
 	protected:
 		void OnMove();									// 移動遊戲元素
@@ -671,6 +721,7 @@ TrominoMatrix according_color_return_matrix()
 
 		int game_lines;
 		int game_init_time;
+		int game_score;
 
 		unsigned game_current_time;
 		unsigned game_minutes;
@@ -679,6 +730,8 @@ TrominoMatrix according_color_return_matrix()
 
 		unsigned game_lines_displacement;
 		unsigned game_end_time_displacement;
+		unsigned game_score_displacement;
+		unsigned game_level_displacement;
 
 		unsigned real_time;
 
@@ -687,7 +740,9 @@ TrominoMatrix according_color_return_matrix()
 		char time_display_back[5] = {};
 		char end_time_display_front[10] = {};
 		char end_time_display_back[5] = {};
-		char real_time_display[80] = {};
+		char real_time_display[20] = {};
+		char score_display[10] = {};
+		char level_display[10] = {};
 
 		time_t now;
 	};
