@@ -7,6 +7,8 @@
 #include "../Library/gamecore.h"
 #include "mygame.h"
 #include <ctime>
+#include <algorithm>
+#include <string>
 
 using namespace game_framework;
 
@@ -15,6 +17,19 @@ CAudio* music = CAudio::Instance();
 /////////////////////////////////////////////////////////////////////////////
 // 這個class為遊戲的遊戲執行物件，主要的遊戲程式都在這裡
 /////////////////////////////////////////////////////////////////////////////
+
+void TetrisGame::remove_and_prepend_rows() {
+	for (unsigned row_index = 0; row_index < canvas.size(); row_index++) {
+		vector<Color> row = canvas[row_index];
+		if (all_of(row.begin(), row.end(), [](Color color) { return color != Color::black; })) {
+			music->Play(AUDIO_ID::Cube_Clear);
+			lines += 1;
+			score += 150;
+			canvas.erase(canvas.begin() + row_index);
+			canvas.insert(canvas.begin(), vector<Color>(CANVAS_WIDTH, Color::black));
+		}
+	}
+}
 
 bool CGameStateRun::click_check(UINT nFlags, CPoint point, CMovingBitmap character)
 {
@@ -153,28 +168,49 @@ void CGameStateRun::display_time()
 
 void CGameStateRun::display_score()
 {
-	sprintf(score_display, "%d", game_score);
-	game_score_displacement = (strlen(score_display) * 15) / 2;
+	score_display = to_string(game_score);
+	for (int i = score_display.length() - 3; i >= 1; i-=3)
+	{
+		score_display.insert(i, ",");
+	}
+	game_score_displacement = (score_display.length() * 12) / 2;
 
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
-	CTextDraw::Print(pDC, 952 - game_score_displacement, 875, score_display);
+	CTextDraw::Print(pDC, 950 - game_score_displacement, 875, score_display);
 
 	CDDraw::ReleaseBackCDC();
 }
 
 void CGameStateRun::display_level()
 {
-	sprintf(level_display, "%d", game_score / 10000 + 1);
-	game_level_displacement = (strlen(level_display) * 16) / 2;
+	sprintf(level_display, "%d", game_lines / 20 + 1);
+	game_level_displacement = (strlen(level_display) * 41) / 2;
 
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 45, "微軟正黑體", RGB(255, 255, 255), 50);
-	CTextDraw::Print(pDC, 943 - game_level_displacement, 900, level_display);
+	CTextDraw::Print(pDC, 955 - game_level_displacement, 900, level_display);
 
 	CDDraw::ReleaseBackCDC();
+}
+
+void CGameStateRun::display_lines_graph()
+{
+	for (int i = 0; i < game_lines % 20; i++)
+	{
+		if (i < game_lines - 1)
+		{
+			lines_graph_body[i].ShowBitmap();
+		}
+		else
+		{
+			int y = lines_graph_body[i].GetTop();
+			lines_graph_top.SetTopLeft(1114, y);
+			lines_graph_top.ShowBitmap();
+		}
+	}
 }
 
 bool  CGameStateRun::game_over_animation()
@@ -473,8 +509,18 @@ void CGameStateRun::game_model(GameType gametype)
 			}
 			else
 			{
+				music->Play(AUDIO_ID::Cube_Full_Clear);
+				sub_phase = 3;
+				record_current_time = clock() + 2000;
+			}
+		}
+		else if (sub_phase == 3)
+		{
+			if (record_current_time < clock())
+			{
 				game_init();
 				tetris_game.score = game_score;
+				sub_phase = 2;
 			}
 		}
 	}
@@ -569,6 +615,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Cube_Decline_Move, "resources/Cube_Decline_Move.wav");
 	music->Load(AUDIO_ID::Cube_Touch_Bottom, "resources/Cube_Touch_Bottom.wav");
 	music->Load(AUDIO_ID::Cube_Clear, "resources/Cube_Clear.wav");
+	music->Load(AUDIO_ID::Cube_Full_Clear, "resources/Cube_Full_Clear.wav");
 	music->Load(AUDIO_ID::Game_Over, "resources/Game_Over.wav");
 
 	music->Play(AUDIO_ID::Arial_City, true);
@@ -678,6 +725,9 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	zen_menu[1].LoadBitmapByString({ "resources/zen_blank.bmp" });
 	zen_menu[1].SetTopLeft(270, 284);
 
+	zen_model.LoadBitmapByString({ "resources/zen_model.bmp" }, RGB(0, 0, 255));
+	zen_model.SetTopLeft(1800, 0);
+
 	start[2].LoadBitmapByString({ "resources/zen_start_1.bmp", "resources/zen_start_2.bmp", "resources/zen_start_3.bmp", "resources/zen_start_4.bmp", "resources/zen_start_5.bmp",
 		"resources/zen_start_6.bmp", "resources/zen_start_7.bmp", "resources/zen_start_8.bmp", "resources/zen_start_7.bmp", "resources/zen_start_6.bmp", "resources/zen_start_5.bmp",
 		"resources/zen_start_4.bmp", "resources/zen_start_3.bmp", "resources/zen_start_2.bmp" });
@@ -685,6 +735,15 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	
 	cube_place.LoadBitmapByString({ "resources/cube_place.bmp", "resources/cube_place_game_over.bmp" }, RGB(0, 0, 255));
 	cube_place.SetTopLeft(618, 224);
+
+	for (unsigned i = 0; i < lines_graph_body.size(); i++)
+	{
+		lines_graph_body[i].LoadBitmapByString({ "resources/lines_graph_body.bmp" });
+		lines_graph_body[i].SetTopLeft(1114, 831-i*32);
+	}
+
+	lines_graph_top.LoadBitmapByString({ "resources/lines_graph_top.bmp" });
+	lines_graph_top.SetTopLeft(1114, 223);
 
 	for (int i = 0; i < CANVAS_HEIGHT; i++)
 	{
@@ -1287,13 +1346,15 @@ void CGameStateRun::OnShow()
 
 			start[2].ShowBitmap();
 		}
-		else if (sub_phase == 2)
+		else if (sub_phase >= 2)
 		{
 			background.ShowBitmap();
+			zen_model.ShowBitmap();
 
 			display_game();
 			display_score();
 			display_level();
+			display_lines_graph();
 		}
 	}
 	else if (phase == 6)

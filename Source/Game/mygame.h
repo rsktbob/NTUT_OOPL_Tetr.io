@@ -90,6 +90,7 @@ namespace game_framework {
 		Cube_Decline_Move,
 		Cube_Touch_Bottom,
 		Cube_Clear,
+		Cube_Full_Clear,
 		Game_Over
 	};
 
@@ -572,17 +573,7 @@ TrominoMatrix according_color_return_matrix()
 		}
 
 		// Remove filled rows, prepend empty rows, and update scores in the process
-		void remove_and_prepend_rows() {
-			for (unsigned row_index = 0; row_index < canvas.size(); row_index++) {
-				vector<Color> row = canvas[row_index];
-				if (all_of(row.begin(), row.end(), [](Color color) { return color != Color::black; })) {
-					lines += 1;
-					score += 150;
-					canvas.erase(canvas.begin() + row_index);
-					canvas.insert(canvas.begin(), vector<Color>(CANVAS_WIDTH, Color::black));
-				}
-			}
-		}
+		void remove_and_prepend_rows();
 
 		bool is_game_over() {
 			// The first row (index 0) and the second row (index 1) is transparent and for preview purposes only,
@@ -650,6 +641,7 @@ TrominoMatrix according_color_return_matrix()
 		void display_time();
 		void display_score();
 		void display_level();
+		void display_lines_graph();
 		void game_init();
 		void game_update(Event event);
 		void game_model(GameType gametype);
@@ -694,6 +686,7 @@ TrominoMatrix according_color_return_matrix()
 		vector<CMovingBitmap> blitz_menu_check = vector<CMovingBitmap>(4);
 
 		vector<CMovingBitmap> zen_menu = vector<CMovingBitmap>(2);
+		CMovingBitmap zen_model;
 
 		vector<CMovingBitmap> start = vector<CMovingBitmap>(4);
 
@@ -704,6 +697,8 @@ TrominoMatrix according_color_return_matrix()
 		vector<vector<CMovingBitmap>> cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
 		CMovingBitmap cube_place;
+		vector<CMovingBitmap> lines_graph_body = vector<CMovingBitmap>(19);
+		CMovingBitmap lines_graph_top;
 		int audio_id;
 		int game_next_decline_time;
 		int game_decline_time_interval;
@@ -723,6 +718,7 @@ TrominoMatrix according_color_return_matrix()
 		int game_init_time;
 		int game_score;
 
+		int record_current_time;
 		unsigned game_current_time;
 		unsigned game_minutes;
 		unsigned game_seconds;
@@ -741,7 +737,7 @@ TrominoMatrix according_color_return_matrix()
 		char end_time_display_front[10] = {};
 		char end_time_display_back[5] = {};
 		char real_time_display[20] = {};
-		char score_display[10] = {};
+		string score_display;
 		char level_display[10] = {};
 
 		time_t now;
