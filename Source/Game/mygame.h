@@ -88,6 +88,7 @@ namespace game_framework {
 		Cube_Rotate,
 		Cube_Horizontal_Move,
 		Cube_Decline_Move,
+		Cube_Switch,
 		Cube_Touch_Bottom,
 		Cube_Clear,
 		Cube_Full_Clear,

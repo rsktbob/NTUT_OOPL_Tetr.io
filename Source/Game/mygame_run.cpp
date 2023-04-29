@@ -613,6 +613,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Cube_Rotate, "resources/Cube_Rotate.wav");
 	music->Load(AUDIO_ID::Cube_Horizontal_Move, "resources/Cube_Horizontal_Move.wav");
 	music->Load(AUDIO_ID::Cube_Decline_Move, "resources/Cube_Decline_Move.wav");
+	music->Load(AUDIO_ID::Cube_Switch, "resources/Cube_Switch.wav");
 	music->Load(AUDIO_ID::Cube_Touch_Bottom, "resources/Cube_Touch_Bottom.wav");
 	music->Load(AUDIO_ID::Cube_Clear, "resources/Cube_Clear.wav");
 	music->Load(AUDIO_ID::Cube_Full_Clear, "resources/Cube_Full_Clear.wav");
@@ -878,6 +879,7 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 				}
 				else if (nChar == 0x43)
 				{
+					music->Play(AUDIO_ID::Cube_Switch);
 					game_update(Event::hold);
 				}
 			}
