@@ -92,7 +92,8 @@ namespace game_framework {
 		Cube_Touch_Bottom,
 		Cube_Clear,
 		Cube_Full_Clear,
-		Game_Over
+		Game_Over,
+		Level_Up
 	};
 
 	enum Color
@@ -637,6 +638,7 @@ TrominoMatrix according_color_return_matrix()
 		bool touch_check(CPoint point, CMovingBitmap character);
 		void touch_option_menu(CPoint point);
 		bool game_over_animation();
+		void game_level_up_animation();
 		void display_game();
 		void display_lines();
 		void display_time();
@@ -645,6 +647,9 @@ TrominoMatrix according_color_return_matrix()
 		void display_lines_graph();
 		void game_init();
 		void game_update(Event event);
+		void game_natural_decline();
+		void game_control();
+		void game_record_current_time();
 		void game_model(GameType gametype);
 		CMovingBitmap Cube();
 	protected:
@@ -655,6 +660,7 @@ TrominoMatrix according_color_return_matrix()
 		int sub_phase;
 		int id;
 		bool fire_animation;
+		bool level_up_animation;
 		
 		bool touch_menu_check_first;
 		bool touch_option_menu_first;
@@ -692,8 +698,11 @@ TrominoMatrix according_color_return_matrix()
 		vector<CMovingBitmap> start = vector<CMovingBitmap>(4);
 
 		vector<CMovingBitmap> fire = vector<CMovingBitmap>(4);
+		CMovingBitmap level_up;
+		CMovingBitmap exit_scene;
 
 		TetrisGame tetris_game;
+		TetrisGame save_tetris_game;
 		vector<vector<CMovingBitmap>> cube = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
@@ -708,6 +717,7 @@ TrominoMatrix according_color_return_matrix()
 		bool left_key_down;
 		bool right_key_down;
 		bool down_key_down;
+		bool exit_check;
 		bool game_over;
 
 		CMovingBitmap retry;
@@ -715,11 +725,12 @@ TrominoMatrix according_color_return_matrix()
 		CMovingBitmap back_to_tittle;
 		bool back_to_tittle_selected;
 
+		int game_level;
 		int game_lines;
 		int game_init_time;
 		int game_score;
 
-		int record_current_time;
+		int game_now_time;
 		unsigned game_current_time;
 		unsigned game_minutes;
 		unsigned game_seconds;

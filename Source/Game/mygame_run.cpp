@@ -185,7 +185,7 @@ void CGameStateRun::display_score()
 
 void CGameStateRun::display_level()
 {
-	sprintf(level_display, "%d", game_lines / 20 + 1);
+	sprintf(level_display, "%d", game_level);
 	game_level_displacement = (strlen(level_display) * 41) / 2;
 
 	CDC *pDC = CDDraw::GetBackCDC();
@@ -200,7 +200,7 @@ void CGameStateRun::display_lines_graph()
 {
 	for (int i = 0; i < game_lines % 20; i++)
 	{
-		if (i < game_lines - 1)
+		if (i < game_lines % 20 - 1)
 		{
 			lines_graph_body[i].ShowBitmap();
 		}
@@ -260,13 +260,33 @@ bool  CGameStateRun::game_over_animation()
 	return true;
 }
 
+void CGameStateRun::game_level_up_animation()
+{
+	if (level_up_animation)
+	{
+		level_up.SetFrameIndexOfBitmap(0);
+		music->Pause();
+		music->Play(AUDIO_ID::Level_Up);
+		level_up.ToggleAnimation();
+		level_up_animation = false;
+	}
+	if (level_up.GetFrameIndexOfBitmap() == 124)
+	{
+		music->Resume();
+		level_up_animation = true;
+		game_level = game_lines / 20 + 1;
+	}
+}
+
 void CGameStateRun::game_init()
 {
 	left_key_down = false;
 	right_key_down = false;
 	down_key_down = false;
+	exit_check = false;
 	game_over = false;
 	fire_animation = true;
+	level_up_animation = true;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place.SetFrameIndexOfBitmap(0);
 	tetris_game = TetrisGame();
@@ -342,6 +362,79 @@ void CGameStateRun::game_update(Event event)
 	}
 }
 
+void  CGameStateRun::game_natural_decline()
+{
+	game_update(Event::tick);
+	game_next_decline_time = clock() + game_decline_time_interval;
+}
+
+void CGameStateRun::game_control()
+{
+	if (left_key_down)
+	{
+		music->Play(AUDIO_ID::Cube_Horizontal_Move);
+		game_update(Event::left);
+	}
+	if (right_key_down)
+	{
+		music->Play(AUDIO_ID::Cube_Horizontal_Move);
+		game_update(Event::right);
+	}
+	if (down_key_down)
+	{
+		music->Play(AUDIO_ID::Cube_Decline_Move);
+		game_update(Event::tick);
+	}
+	if (exit_check)
+	{
+		if (exit_scene.GetFrameIndexOfBitmap() < 31)
+		{
+			exit_scene.SetFrameIndexOfBitmap(exit_scene.GetFrameIndexOfBitmap() + 1);
+		}
+		else
+		{
+			tittle.SetFrameIndexOfBitmap(1);
+			game_mode.SetFrameIndexOfBitmap(0);
+			music->Stop(audio_id);
+			music->Play(AUDIO_ID::Arial_City, true);
+			phase = 2;
+		}
+	}
+	else
+	{
+		if (exit_scene.GetFrameIndexOfBitmap() > 0 && exit_scene.GetFrameIndexOfBitmap() != 31)
+		{
+			if (exit_scene.GetFrameIndexOfBitmap() == 0)
+			{
+				exit_scene.SetFrameIndexOfBitmap(31);
+			}
+			exit_scene.SetFrameIndexOfBitmap(exit_scene.GetFrameIndexOfBitmap() - 1);
+		}
+	}
+	game_next_move_time = clock() + game_move_time_interval;
+	game_move_time_interval = 60;
+}
+
+void CGameStateRun::game_record_current_time()
+{
+	now = time(0);
+	tm *localtm = localtime(&now);
+
+	int real_time_year = localtm->tm_year + 1900;
+	int real_time_month = localtm->tm_mon + 1;
+	int real_time_day = localtm->tm_mday;
+
+	int real_time_hour = localtm->tm_hour;
+	int real_time_min = localtm->tm_min;
+	int real_time_sec = localtm->tm_sec;
+
+	game_end_time_displacement = game_minutes >= 10 ? 35 : 0;
+
+	sprintf(end_time_display_front, "%d:%02d", game_minutes, game_seconds);
+	sprintf(end_time_display_back, ".%03d", game_milliseconds);
+	sprintf(real_time_display, "%d/%d/%02d  %d:%02d:%02d", real_time_year, real_time_month, real_time_day, real_time_hour, real_time_min, real_time_sec);
+}
+
 void CGameStateRun::game_model(GameType gametype)
 {
 	if (gametype == GameType::fourtyl)
@@ -367,50 +460,16 @@ void CGameStateRun::game_model(GameType gametype)
 			{
 				if (game_next_decline_time <= clock())
 				{
-					game_update(Event::tick);
-					game_next_decline_time = clock() + game_decline_time_interval;
+					game_natural_decline();
 				}
 				if (game_next_move_time <= clock())
 				{
-					if (left_key_down)
-					{
-						music->Play(AUDIO_ID::Cube_Horizontal_Move);
-						game_update(Event::left);
-					}
-					if (right_key_down)
-					{
-						music->Play(AUDIO_ID::Cube_Horizontal_Move);
-						game_update(Event::right);
-					}
-					if (down_key_down)
-					{
-						music->Play(AUDIO_ID::Cube_Decline_Move);
-						game_update(Event::tick);
-					}
-					game_next_move_time = clock() + game_move_time_interval;
-					game_move_time_interval = 50;
+					game_control();
 				}
 				if (game_lines >= 6)
 				{
 					music->Stop(audio_id);
-
-					now = time(0);
-					tm *gmtm = gmtime(&now);
-
-					int real_time_year = gmtm->tm_year + 1900;
-					int real_time_month = gmtm->tm_mon;
-					int real_time_day = gmtm->tm_mday;
-
-					int real_time_hour = gmtm->tm_hour;
-					int real_time_min = gmtm->tm_min;
-					int real_time_sec = gmtm->tm_sec;
-
-					game_end_time_displacement = game_minutes >= 10 ? 35 : 0;
-
-					sprintf(end_time_display_front, "%d:%02d", game_minutes, game_seconds);
-					sprintf(end_time_display_back, ".%03d", game_milliseconds);
-					sprintf(real_time_display, "%d/%d/%d  %d:%d:%d", real_time_year, real_time_month, real_time_day, real_time_hour, real_time_min, real_time_sec);
-
+					game_record_current_time();
 					tittle.SetFrameIndexOfBitmap(5);
 					fourtyl_again.SetAnimation(60, false);
 					sub_phase = 4;
@@ -483,43 +542,31 @@ void CGameStateRun::game_model(GameType gametype)
 			{
 				if (game_next_decline_time <= clock())
 				{
-					game_update(Event::tick);
-					game_next_decline_time = clock() + game_decline_time_interval;
+					game_natural_decline();
 				}
 				if (game_next_move_time <= clock())
 				{
-					if (left_key_down)
-					{
-						music->Play(AUDIO_ID::Cube_Horizontal_Move);
-						game_update(Event::left);
-					}
-					if (right_key_down)
-					{
-						music->Play(AUDIO_ID::Cube_Horizontal_Move);
-						game_update(Event::right);
-					}
-					if (down_key_down)
-					{
-						music->Play(AUDIO_ID::Cube_Decline_Move);
-						game_update(Event::tick);
-					}
-					game_next_move_time = clock() + game_move_time_interval;
-					game_move_time_interval = 50;
+					game_control();
 				}
 			}
 			else
 			{
 				music->Play(AUDIO_ID::Cube_Full_Clear);
 				sub_phase = 3;
-				record_current_time = clock() + 2000;
+				game_now_time = clock() + 2000;
+			}
+			if (game_level < game_lines / 20 + 1)
+			{
+				game_level_up_animation();
 			}
 		}
 		else if (sub_phase == 3)
 		{
-			if (record_current_time < clock())
+			if (game_now_time < clock())
 			{
 				game_init();
 				tetris_game.score = game_score;
+				tetris_game.lines = game_lines;
 				sub_phase = 2;
 			}
 		}
@@ -618,6 +665,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Cube_Clear, "resources/Cube_Clear.wav");
 	music->Load(AUDIO_ID::Cube_Full_Clear, "resources/Cube_Full_Clear.wav");
 	music->Load(AUDIO_ID::Game_Over, "resources/Game_Over.wav");
+	music->Load(AUDIO_ID::Level_Up, "resources/level_Up.wav");
 
 	music->Play(AUDIO_ID::Arial_City, true);
 
@@ -815,6 +863,54 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	fire[3].SetTopLeft(1050, 870);
 	fire_animation = true;
 
+	level_up.LoadBitmapByString({ "resources/level_up_cutscene_1.bmp", "resources/level_up_cutscene_2.bmp", "resources/level_up_cutscene_3.bmp", "resources/level_up_cutscene_4.bmp",
+	"resources/level_up_cutscene_5.bmp", "resources/level_up_cutscene_6.bmp", "resources/level_up_cutscene_7.bmp", "resources/level_up_cutscene_8.bmp",
+	"resources/level_up_cutscene_9.bmp", "resources/level_up_cutscene_10.bmp", "resources/level_up_cutscene_11.bmp", "resources/level_up_cutscene_12.bmp",
+	"resources/level_up_cutscene_13.bmp", "resources/level_up_cutscene_14.bmp", "resources/level_up_cutscene_15.bmp", "resources/level_up_cutscene_16.bmp",
+	"resources/level_up_cutscene_17.bmp", "resources/level_up_cutscene_18.bmp", "resources/level_up_cutscene_19.bmp", "resources/level_up_cutscene_20.bmp",
+	"resources/level_up_cutscene_21.bmp", "resources/level_up_cutscene_22.bmp", "resources/level_up_cutscene_23.bmp", "resources/level_up_cutscene_24.bmp",
+	"resources/level_up_cutscene_25.bmp", "resources/level_up_cutscene_26.bmp", "resources/level_up_cutscene_27.bmp", "resources/level_up_cutscene_28.bmp",
+	"resources/level_up_cutscene_29.bmp", "resources/level_up_cutscene_30.bmp", "resources/level_up_cutscene_31.bmp", "resources/level_up_cutscene_32.bmp",
+	"resources/level_up_cutscene_33.bmp", "resources/level_up_cutscene_34.bmp", "resources/level_up_cutscene_35.bmp", "resources/level_up_cutscene_36.bmp",
+	"resources/level_up_cutscene_37.bmp", "resources/level_up_cutscene_38.bmp", "resources/level_up_cutscene_39.bmp", "resources/level_up_cutscene_40.bmp",
+	"resources/level_up_cutscene_41.bmp", "resources/level_up_cutscene_42.bmp", "resources/level_up_cutscene_43.bmp", "resources/level_up_cutscene_44.bmp",
+	"resources/level_up_cutscene_45.bmp", "resources/level_up_cutscene_46.bmp", "resources/level_up_cutscene_47.bmp", "resources/level_up_cutscene_48.bmp",
+	"resources/level_up_cutscene_49.bmp", "resources/level_up_cutscene_50.bmp", "resources/level_up_cutscene_51.bmp", "resources/level_up_cutscene_52.bmp",
+	"resources/level_up_cutscene_53.bmp", "resources/level_up_cutscene_54.bmp", "resources/level_up_cutscene_55.bmp", "resources/level_up_cutscene_56.bmp",
+	"resources/level_up_cutscene_57.bmp", "resources/level_up_cutscene_58.bmp", "resources/level_up_cutscene_59.bmp", "resources/level_up_cutscene_60.bmp",
+	"resources/level_up_cutscene_61.bmp", "resources/level_up_cutscene_62.bmp", "resources/level_up_cutscene_63.bmp", "resources/level_up_cutscene_64.bmp",
+	"resources/level_up_cutscene_65.bmp", "resources/level_up_cutscene_66.bmp", "resources/level_up_cutscene_67.bmp", "resources/level_up_cutscene_68.bmp",
+	"resources/level_up_cutscene_69.bmp", "resources/level_up_cutscene_70.bmp", "resources/level_up_cutscene_71.bmp", "resources/level_up_cutscene_72.bmp",
+	"resources/level_up_cutscene_73.bmp", "resources/level_up_cutscene_74.bmp", "resources/level_up_cutscene_75.bmp", "resources/level_up_cutscene_76.bmp",
+	"resources/level_up_cutscene_77.bmp", "resources/level_up_cutscene_78.bmp", "resources/level_up_cutscene_79.bmp", "resources/level_up_cutscene_80.bmp",
+	"resources/level_up_cutscene_81.bmp", "resources/level_up_cutscene_82.bmp", "resources/level_up_cutscene_83.bmp", "resources/level_up_cutscene_84.bmp",
+	"resources/level_up_cutscene_85.bmp", "resources/level_up_cutscene_86.bmp", "resources/level_up_cutscene_87.bmp", "resources/level_up_cutscene_88.bmp",
+	"resources/level_up_cutscene_89.bmp", "resources/level_up_cutscene_90.bmp", "resources/level_up_cutscene_91.bmp", "resources/level_up_cutscene_92.bmp",
+	"resources/level_up_cutscene_93.bmp", "resources/level_up_cutscene_94.bmp", "resources/level_up_cutscene_95.bmp", "resources/level_up_cutscene_96.bmp",
+	"resources/level_up_cutscene_97.bmp", "resources/level_up_cutscene_98.bmp", "resources/level_up_cutscene_99.bmp", "resources/level_up_cutscene_100.bmp",
+	"resources/level_up_cutscene_101.bmp", "resources/level_up_cutscene_102.bmp", "resources/level_up_cutscene_103.bmp", "resources/level_up_cutscene_104.bmp",
+	"resources/level_up_cutscene_105.bmp", "resources/level_up_cutscene_106.bmp", "resources/level_up_cutscene_107.bmp", "resources/level_up_cutscene_108.bmp",
+	"resources/level_up_cutscene_109.bmp", "resources/level_up_cutscene_110.bmp", "resources/level_up_cutscene_111.bmp", "resources/level_up_cutscene_112.bmp",
+	"resources/level_up_cutscene_113.bmp", "resources/level_up_cutscene_114.bmp", "resources/level_up_cutscene_115.bmp", "resources/level_up_cutscene_116.bmp",
+	"resources/level_up_cutscene_117.bmp", "resources/level_up_cutscene_118.bmp", "resources/level_up_cutscene_119.bmp", "resources/level_up_cutscene_120.bmp",
+	"resources/level_up_cutscene_121.bmp", "resources/level_up_cutscene_122.bmp", "resources/level_up_cutscene_123.bmp", "resources/level_up_cutscene_124.bmp", });
+	level_up.LoadBitmapByString({ "resources/level_up_cutscene_transparent.bmp" }, RGB(255, 255, 255));
+	level_up.SetFrameIndexOfBitmap(124);
+	level_up.SetTopLeft(30, 0);
+	level_up.SetAnimation(16, true);
+
+	exit_scene.LoadBitmapByString({ "resources/exit_animation_1.bmp", "resources/exit_animation_2.bmp", "resources/exit_animation_3.bmp", "resources/exit_animation_4.bmp",
+	"resources/exit_animation_5.bmp", "resources/exit_animation_6.bmp", "resources/exit_animation_7.bmp", "resources/exit_animation_8.bmp",
+	"resources/exit_animation_9.bmp", "resources/exit_animation_10.bmp", "resources/exit_animation_11.bmp", "resources/exit_animation_12.bmp",
+	"resources/exit_animation_13.bmp", "resources/exit_animation_14.bmp", "resources/exit_animation_15.bmp", "resources/exit_animation_16.bmp",
+	"resources/exit_animation_17.bmp", "resources/exit_animation_18.bmp", "resources/exit_animation_19.bmp", "resources/exit_animation_20.bmp",
+	"resources/exit_animation_21.bmp", "resources/exit_animation_22.bmp", "resources/exit_animation_23.bmp", "resources/exit_animation_24.bmp",
+	"resources/exit_animation_25.bmp", "resources/exit_animation_26.bmp", "resources/exit_animation_27.bmp", "resources/exit_animation_28.bmp",
+	"resources/exit_animation_29.bmp", "resources/exit_animation_30.bmp", "resources/exit_animation_31.bmp", "resources/exit_animation_transparent.bmp" }, RGB(0, 0, 0));
+	
+	exit_scene.SetTopLeft(10, 910);
+	exit_scene.SetFrameIndexOfBitmap(31);
+
 	touch_option_menu_first = true;
 	touch_option_menu_selected = false;
 
@@ -836,6 +932,8 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	fire_animation = true;
 
 	game_score = 0;
+
+	game_level = 1;
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -882,6 +980,11 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 					music->Play(AUDIO_ID::Cube_Switch);
 					game_update(Event::hold);
 				}
+				else if (nChar == VK_ESCAPE)
+				{
+					exit_scene.SetFrameIndexOfBitmap(0);
+					exit_check = true;
+				}
 			}
 		}
 	}
@@ -904,6 +1007,10 @@ void CGameStateRun::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 			else if (nChar == VK_DOWN)
 			{
 				down_key_down = false;
+			}
+			else if (nChar == VK_ESCAPE)
+			{
+				exit_check = false;
 			}
 		}
 	}
@@ -997,7 +1104,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			if (click_check(nFlags, point, back_to_tittle))
 			{
 				music->Play(AUDIO_ID::Back_Menu);
-				music->Play(AUDIO_ID::Arial_City);
+				music->Play(AUDIO_ID::Arial_City, true);
 				sub_phase = 1;
 			}
 		}
@@ -1014,55 +1121,17 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			if (click_check(nFlags, point, back))
 			{
 				music->Play(AUDIO_ID::Back_Menu);
+				music->Play(AUDIO_ID::Arial_City, true);
 				tittle.SetFrameIndexOfBitmap(1);
 				back.SetFrameIndexOfBitmap(0);
 				start[id].SetAnimation(60, true);
 				game_mode.SetFrameIndexOfBitmap(0);
 				phase = 2;
-				sub_phase = 1;
 			}
 		}
 	}
 	else if (phase == 4)
 	{
-		/*if (sub_phase == 1)
-		{
-			if (click_check(nFlags, point, back))
-			{
-				music->Play(AUDIO_ID::Back_Menu);
-				tittle.SetFrameIndexOfBitmap(1);
-				back.SetFrameIndexOfBitmap(0);
-				start[id].SetAnimation(60, true);
-				game_mode.SetFrameIndexOfBitmap(0);
-				phase = 2;
-				sub_phase = 1;
-			}
-			if (click_check(nFlags, point, start[1]))
-			{
-				music->Play(AUDIO_ID::Click_Menu);
-				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(rand() % 6, true);
-				background.SetFrameIndexOfBitmap(rand() % 6);
-				game_next_decline_time = clock();
-				game_next_move_time = clock();
-				sub_phase = 2;
-			}
-			for (int i = 0; i < 4; i++)
-			{
-				if (click_check(nFlags, point, blitz_menu_check[i]))
-				{
-					music->Play(AUDIO_ID::Click_Check_Menu);
-					if (blitz_menu_check[i].GetFrameIndexOfBitmap() == 0)
-					{
-						blitz_menu_check[i].SetFrameIndexOfBitmap(1);
-					}
-					else
-					{
-						blitz_menu_check[i].SetFrameIndexOfBitmap(0);
-					}
-				}
-			}
-		}*/
 		if (sub_phase == 1)
 		{
 			if (click_check(nFlags, point, back))
@@ -1074,7 +1143,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				game_mode.SetFrameIndexOfBitmap(0);
 				phase = 2;
 			}
-			if (click_check(nFlags, point, start[2]))
+			if (click_check(nFlags, point, start[1]))
 			{
 				audio_id = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
@@ -1101,9 +1170,10 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[2]))
 			{
+				audio_id = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(rand() % 6, true);
+				music->Play(audio_id, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
 				game_next_decline_time = clock();
 				game_next_move_time = clock();
@@ -1263,6 +1333,7 @@ void CGameStateRun::OnShow()
 			display_game();
 			display_lines();
 			display_time();
+			exit_scene.ShowBitmap();
 
 			if (game_over)
 			{
@@ -1357,6 +1428,10 @@ void CGameStateRun::OnShow()
 			display_score();
 			display_level();
 			display_lines_graph();
+			display_lines();
+			exit_scene.ShowBitmap();
+
+			level_up.ShowBitmap();
 		}
 	}
 	else if (phase == 6)
