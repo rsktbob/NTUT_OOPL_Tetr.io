@@ -93,7 +93,9 @@ namespace game_framework {
 		Cube_Clear,
 		Cube_Full_Clear,
 		Game_Over,
-		Level_Up
+		Level_Up,
+		Exit_Process_Game,
+		Exit_Game
 	};
 
 	enum Color
@@ -639,6 +641,7 @@ TrominoMatrix according_color_return_matrix()
 		void touch_option_menu(CPoint point);
 		bool game_over_animation();
 		void game_level_up_animation();
+		void game_exit_animation();
 		void display_game();
 		void display_lines();
 		void display_time();
@@ -710,6 +713,7 @@ TrominoMatrix according_color_return_matrix()
 		vector<CMovingBitmap> lines_graph_body = vector<CMovingBitmap>(19);
 		CMovingBitmap lines_graph_top;
 		int audio_id;
+		int record_current_time;
 		int game_next_decline_time;
 		int game_decline_time_interval;
 		int game_next_move_time;
@@ -730,7 +734,6 @@ TrominoMatrix according_color_return_matrix()
 		int game_init_time;
 		int game_score;
 
-		int game_now_time;
 		unsigned game_current_time;
 		unsigned game_minutes;
 		unsigned game_seconds;
