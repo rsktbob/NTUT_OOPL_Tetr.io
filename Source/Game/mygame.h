@@ -346,14 +346,14 @@ TrominoMatrix according_color_return_matrix()
 	public:
 		int lines = 0;
 		int score = 0;
+		int level = 1;
+		int init_time = 0;
 		optional<Tromino> active_tromino = Tromino::random_tromino();
-		deque<Tromino> next_tromino_array = {Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino() };
+		deque<Tromino> next_tromino_array = { Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino() };
 		optional<Tromino> hold_tromino;
 		Canvas canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
 		Canvas place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
 		Canvas hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
-		bool hold_once_per_round = true;
-		
 
 		GameState event_handler(Event event) {
 			// Generate a new tromino if active_tromino is null
@@ -367,7 +367,6 @@ TrominoMatrix according_color_return_matrix()
 				this->active_tromino.emplace(next_tromino_array.front());
 				next_tromino_array.pop_front();
 				next_tromino_array.emplace_back(Tromino::random_tromino());
-				hold_once_per_round = true;
 			}
 
 			remove_active_tromino_from_canvas();
@@ -412,7 +411,7 @@ TrominoMatrix according_color_return_matrix()
 				game_over = is_game_over();
 			}
 
-			return {  lines, score, game_over, canvas, place_canvas, hold_canvas };
+			return { lines, score, game_over, canvas, place_canvas, hold_canvas };
 		}
 
 		void remove_active_tromino_from_canvas() {
@@ -470,22 +469,18 @@ TrominoMatrix according_color_return_matrix()
 		}
 
 		void hold_active_tromino() {
-			if (hold_once_per_round)
+			if (hold_tromino.has_value())
 			{
-				if (hold_tromino.has_value())
-				{
-					optional<Tromino> temporary_tromino = active_tromino;
-					active_tromino = hold_tromino;
-					hold_tromino = Tromino(Color::grey, temporary_tromino->according_color_return_matrix());
-				}
-				else
-				{
-					hold_tromino = Tromino(Color::grey, active_tromino->according_color_return_matrix());
-					active_tromino = next_tromino_array.front();
-					next_tromino_array.pop_front();
-					next_tromino_array.emplace_back(Tromino::random_tromino());
-				}
-				hold_once_per_round = false;
+				optional<Tromino> temporary_tromino = active_tromino;
+				active_tromino = hold_tromino;
+				hold_tromino = Tromino(Color::grey, temporary_tromino->according_color_return_matrix());
+			}
+			else
+			{
+				hold_tromino = Tromino(Color::grey, active_tromino->according_color_return_matrix());
+				active_tromino = next_tromino_array.front();
+				next_tromino_array.pop_front();
+				next_tromino_array.emplace_back(Tromino::random_tromino());
 			}
 		}
 
@@ -598,6 +593,12 @@ TrominoMatrix according_color_return_matrix()
 			int min = 40;
 			return rand() % (max - min + 1) + min;
 		}
+		
+		void clear_all_canvas() {
+			canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
+			place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
+			hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
+		}
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -643,11 +644,11 @@ TrominoMatrix according_color_return_matrix()
 		void game_level_up_animation();
 		void game_exit_animation();
 		void display_game();
-		void display_lines();
+		void display_lines(unsigned lines_total);
 		void display_time();
 		void display_score();
 		void display_level();
-		void display_lines_graph();
+		void display_lines_graph(unsigned lines_total);
 		void game_init();
 		void game_update(Event event);
 		void game_natural_decline();
@@ -701,7 +702,7 @@ TrominoMatrix according_color_return_matrix()
 		vector<CMovingBitmap> start = vector<CMovingBitmap>(4);
 
 		vector<CMovingBitmap> fire = vector<CMovingBitmap>(4);
-		CMovingBitmap level_up;
+		CMovingBitmap level_up_scene;
 		CMovingBitmap exit_scene;
 
 		TetrisGame tetris_game;
@@ -710,7 +711,7 @@ TrominoMatrix according_color_return_matrix()
 		vector<vector<CMovingBitmap>> cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
 		CMovingBitmap cube_place;
-		vector<CMovingBitmap> lines_graph_body = vector<CMovingBitmap>(19);
+		vector<CMovingBitmap> lines_graph_body = vector<CMovingBitmap>(20);
 		CMovingBitmap lines_graph_top;
 		int audio_id;
 		int record_current_time;
@@ -729,24 +730,21 @@ TrominoMatrix according_color_return_matrix()
 		CMovingBitmap back_to_tittle;
 		bool back_to_tittle_selected;
 
-		int game_level;
-		int game_lines;
-		int game_init_time;
-		int game_score;
-
 		unsigned game_current_time;
 		unsigned game_minutes;
 		unsigned game_seconds;
 		unsigned game_milliseconds;
 
-		unsigned game_lines_displacement;
-		unsigned game_end_time_displacement;
-		unsigned game_score_displacement;
-		unsigned game_level_displacement;
+		unsigned lines_displacement_front;
+		unsigned lines_displacement_back;
+		unsigned end_time_displacement;
+		unsigned score_displacement;
+		unsigned level_displacement;
 
 		unsigned real_time;
 
-		char lines_display[6] = {};
+		char lines_display_front[6] = {};
+		char lines_display_back[6] = {};
 		char time_display_front[10] = {};
 		char time_display_back[5] = {};
 		char end_time_display_front[10] = {};
