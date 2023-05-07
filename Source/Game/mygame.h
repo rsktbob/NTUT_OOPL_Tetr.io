@@ -79,6 +79,9 @@ namespace game_framework {
 		Morning_Sun_Kamoking,
 		In_Sorrow_And_Pains_Mirera,
 		Piercing_Wind,
+		Success_Story_Akiko_Shioyama,
+		Hyper_Velocity,
+		Philosophy,
 		Touch_Menu,
 		Click_Menu,
 		Back_Menu,
@@ -661,7 +664,7 @@ TrominoMatrix according_color_return_matrix()
 		void display_on_left_level();
 		void display_lines_graph(unsigned lines_total);
 		void display_play_total_time();
-		void display_play_real_time();
+		void display_play_real_time(COLORREF color);
 		void display_play_total_score();
 		void game_init();
 		void game_update(Event event);
@@ -671,7 +674,7 @@ TrominoMatrix according_color_return_matrix()
 		void game_record_current_score();
 		void game_model(GameType gametype);
 		void fail_game_menu_move();
-		void fail_game_menu_click(UINT nFlags, CPoint point);
+		void fail_game_menu_click(UINT nFlags, CPoint point, GameType gametype);
 		void fail_game_menu_touch(CPoint point);
 		CMovingBitmap Cube();
 	protected:

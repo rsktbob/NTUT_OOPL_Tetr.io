@@ -299,11 +299,11 @@ void CGameStateRun::display_play_total_time()
 	CDDraw::ReleaseBackCDC();
 }
 
-void CGameStateRun::display_play_real_time()
+void CGameStateRun::display_play_real_time(COLORREF color)
 {
 	CDC *pDC = CDDraw::GetBackCDC();
 
-	CTextDraw::ChangeFontLog(pDC, 30, "微軟正黑體", RGB(169, 117, 83), 50);
+	CTextDraw::ChangeFontLog(pDC, 30, "微軟正黑體", color, 50);
 	CTextDraw::Print(pDC, 200, 964, real_time_display);
 
 	CDDraw::ReleaseBackCDC();
@@ -315,7 +315,7 @@ void CGameStateRun::display_play_total_score()
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 120, "微軟正黑體", RGB(243, 197, 197), 50);
-	CTextDraw::Print(pDC, 765 - end_score_displacement, 180, end_score_display);
+	CTextDraw::Print(pDC, 931 - end_score_displacement, 180, end_score_display);
 
 	CDDraw::ReleaseBackCDC();
 }
@@ -561,11 +561,11 @@ void CGameStateRun::game_record_current_time()
 void CGameStateRun::game_record_current_score()
 {
 	end_score_display = to_string(tetris_game.score);
-	for (int i = score_display.length() - 3; i >= 1; i -= 3)
+	for (int i = end_score_display.length() - 3; i >= 1; i -= 3)
 	{
-		score_display.insert(i, ",");
+		end_score_display.insert(i, ",");
 	}
-	end_score_displacement = (end_score_display.length() * 30) / 2;
+	end_score_displacement = (end_score_display.length() - 1) * 35;
 }
 
 void CGameStateRun::game_model(GameType gametype)
@@ -578,7 +578,7 @@ void CGameStateRun::game_model(GameType gametype)
 			{
 				if (touch_option_menu_first)
 				{
-					music->Play(11);
+					music->Play(AUDIO_ID::Touch_Check_Menu);
 					touch_option_menu_first = false;
 				}
 			}
@@ -602,6 +602,8 @@ void CGameStateRun::game_model(GameType gametype)
 				if (tetris_game.lines >= 40)
 				{
 					music->Stop(audio_id);
+					audio_id = AUDIO_ID::Success_Story_Akiko_Shioyama;
+					music->Play(audio_id, true);
 					game_record_current_time();
 					tittle.SetFrameIndexOfBitmap(5);
 					again[0].SetAnimation(60, false);
@@ -687,6 +689,8 @@ void CGameStateRun::game_model(GameType gametype)
 				if (game_current_time == 0)
 				{
 					music->Stop(audio_id);
+					audio_id = AUDIO_ID::Philosophy;
+					music->Play(audio_id, true);
 					game_record_current_time();
 					game_record_current_score();
 					tittle.SetFrameIndexOfBitmap(6);
@@ -810,14 +814,14 @@ void CGameStateRun::fail_game_menu_move()
 	}
 }
 
-void CGameStateRun::fail_game_menu_click(UINT nFlags, CPoint point)
+void CGameStateRun::fail_game_menu_click(UINT nFlags, CPoint point, GameType gametype)
 {
 	if (click_check(nFlags, point, retry))
 	{
-		audio_id = rand() % 6;
 		music->Play(AUDIO_ID::Back_Menu);
 		music->Stop(AUDIO_ID::Arial_City);
-		music->Play(audio_id, true);
+		audio_id = gametype == GameType::blitz ? AUDIO_ID::Hyper_Velocity : rand() % 6;
+		music->Play(audio_id, gametype == GameType::blitz ? false : true);
 		game_init();
 		retry.SetTopLeft(1921, 80);
 		back_to_tittle.SetTopLeft(1921, 200);
@@ -935,6 +939,9 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Morning_Sun_Kamoking, "resources/Morning_Sun_Kamoking.wav");
 	music->Load(AUDIO_ID::In_Sorrow_And_Pains_Mirera, "resources/In_Sorrow_And_Pains_Mirera.wav");
 	music->Load(AUDIO_ID::Piercing_Wind, "resources/Piercing_Wind.wav");
+	music->Load(AUDIO_ID::Success_Story_Akiko_Shioyama, "resources/Success_Story_Akiko_Shioyama.wav");
+	music->Load(AUDIO_ID::Hyper_Velocity, "resources/Hyper_Velocity.wav");
+	music->Load(AUDIO_ID::Philosophy, "resources/Philosophy.wav");
 	music->Load(AUDIO_ID::Touch_Menu, "resources/Touch_Menu.wav");
 	music->Load(AUDIO_ID::Click_Menu, "resources/Click_Menu.wav");
 	music->Load(AUDIO_ID::Back_Menu, "resources/Back_Menu.wav");
@@ -1392,12 +1399,14 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		}
 		else if (sub_phase == 3)
 		{
-			fail_game_menu_click(nFlags, point);
+			fail_game_menu_click(nFlags, point, GameType::fourtyl);
 		}
 		else if (sub_phase == 4)
 		{
 			if (click_check(nFlags, point, again[0]))
 			{
+				music->Stop(audio_id);
+				audio_id = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Play(audio_id, true);
 				again[0].SetAnimation(60, true);
@@ -1406,6 +1415,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, back))
 			{
+				music->Stop(audio_id);
 				music->Play(AUDIO_ID::Back_Menu);
 				music->Play(AUDIO_ID::Arial_City, true);
 				again[0].SetAnimation(60, true);
@@ -1432,30 +1442,48 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[1]))
 			{
-				audio_id = rand() % 6;
+				audio_id = AUDIO_ID::Hyper_Velocity;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(audio_id, true);
+				music->Play(audio_id);
 				game_init();
 				sub_phase = 2;
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				if (click_check(nFlags, point, blitz_menu_check[i]))
+				{
+					music->Play(10);
+					if (blitz_menu_check[i].GetFrameIndexOfBitmap() == 0)
+					{
+						blitz_menu_check[i].SetFrameIndexOfBitmap(1);
+					}
+					else
+					{
+						blitz_menu_check[i].SetFrameIndexOfBitmap(0);
+					}
+				}
 			}
 		}
 		else if (sub_phase == 3)
 		{
-			fail_game_menu_click(nFlags, point);
+			fail_game_menu_click(nFlags, point, GameType::blitz);
 		}
 		else if (sub_phase == 4)
 		{
 			if (click_check(nFlags, point, again[1]))
 			{
 				music->Play(AUDIO_ID::Click_Menu);
-				music->Play(audio_id, true);
+				music->Stop(audio_id);
+				audio_id = AUDIO_ID::Hyper_Velocity;
+				music->Play(audio_id);
 				again[1].SetAnimation(60, true);
 				game_init();
 				sub_phase = 2;
 			}
 			if (click_check(nFlags, point, back))
 			{
+				music->Stop(audio_id);
 				music->Play(AUDIO_ID::Back_Menu);
 				music->Play(AUDIO_ID::Arial_City, true);
 				again[1].SetAnimation(60, true);
@@ -1659,7 +1687,7 @@ void CGameStateRun::OnShow()
 			again[0].ShowBitmap();
 			back.ShowBitmap();
 			display_play_total_time();
-			display_play_real_time();
+			display_play_real_time(RGB(169, 117, 83));
 		}
 	}
 	else if (phase == 4)
@@ -1719,7 +1747,7 @@ void CGameStateRun::OnShow()
 			again[1].ShowBitmap();
 			back.ShowBitmap();
 			display_play_total_score();
-			display_play_real_time();
+			display_play_real_time(RGB(224, 159, 159));
 		}
 	}
 	else if (phase == 5)
