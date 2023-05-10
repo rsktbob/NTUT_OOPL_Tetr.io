@@ -288,7 +288,6 @@ void CGameStateRun::display_lines_graph(unsigned lines_total)
 
 void CGameStateRun::display_play_total_time()
 {
-
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 120, "微軟正黑體", RGB(244, 193, 155), 50);
@@ -323,14 +322,14 @@ void CGameStateRun::display_play_total_score()
 bool  CGameStateRun::game_over_animation()
 {
 	cube_place.SetFrameIndexOfBitmap(1);
-	if (fire_animation)
+	if (fire_animation_check)
 	{
 		music->Play(AUDIO_ID::Game_Over);
 		for (int i = 0; i < 4; i++)
 		{
 			fire[i].ToggleAnimation();
 		}
-		fire_animation = false;
+		fire_animation_check = false;
 		decline_distance = 20;
 	}
 	if (fire[0].GetFrameIndexOfBitmap() == 37)
@@ -368,22 +367,38 @@ bool  CGameStateRun::game_over_animation()
 	return true;
 }
 
+bool CGameStateRun::game_success_animation()
+{
+	static int record_current_time = 0;
+	if (finish_animation_check) {
+		music->Stop(audio_id);
+		music->Play(AUDIO_ID::Game_Finish);
+		game_record_current_time();
+		record_current_time = clock();
+		finish_animation_check = false;
+	}
+	else if (record_current_time < clock() - 2000) {
+		return false;
+	}
+	return true;
+}
+
 void CGameStateRun::game_level_up_animation()
 {
-	if (level_up_animation)
+	if (level_up_animation_check)
 	{
 		level_up_scene.SetFrameIndexOfBitmap(0);
 		music->Pause();
 		music->Play(AUDIO_ID::Level_Up);
 		level_up_scene.ToggleAnimation();
-		level_up_animation = false;
+		level_up_animation_check = false;
 	}
 	if (level_up_scene.GetFrameIndexOfBitmap() == 124)
 	{
 		music->Resume();
 		tetris_game.level += 1;
 		tetris_game.lines -= 20;
-		level_up_animation = true;
+		level_up_animation_check = true;
 	}
 }
 
@@ -432,10 +447,11 @@ void CGameStateRun::game_init()
 	down_key_down = false;
 	exit_check = false;
 	game_over = false;
-	fire_animation = true;
-	level_up_animation = true;
+	game_success = false;
+	fire_animation_check = true;
+	level_up_animation_check = true;
+	finish_animation_check = true;
 	decline_distance = 0;
-	current_blitz_lines = 3;
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place.SetFrameIndexOfBitmap(0);
@@ -535,7 +551,7 @@ void CGameStateRun::game_control()
 		game_update(Event::tick);
 	}
 	game_next_move_time = clock() + game_move_time_interval;
-	game_move_time_interval = 55;
+	game_move_time_interval = 50;
 }
 
 void CGameStateRun::game_record_current_time()
@@ -589,7 +605,7 @@ void CGameStateRun::game_model(GameType gametype)
 		}
 		else if (sub_phase == 2)
 		{
-			if (!game_over)
+			if (!game_over && !game_success)
 			{
 				if (game_next_decline_time <= clock())
 				{
@@ -601,26 +617,30 @@ void CGameStateRun::game_model(GameType gametype)
 				}
 				if (tetris_game.lines >= 40)
 				{
-					music->Stop(audio_id);
-					audio_id = AUDIO_ID::Success_Story_Akiko_Shioyama;
-					music->Play(audio_id, true);
-					game_record_current_time();
-					tittle.SetFrameIndexOfBitmap(5);
-					again[0].SetAnimation(60, false);
-					sub_phase = 4;
+					game_success = true;
 				}
 				if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
 				{
 					game_exit_animation();
 				}
 			}
-			else
+			else if (game_over)
 			{
 				if (!game_over_animation())
 				{
 					music->Stop(audio_id);
 					music->Play(AUDIO_ID::Game_Over_Menu);
 					sub_phase = 3;
+				}
+			}
+			else {
+				if (!game_success_animation())
+				{
+					audio_id = AUDIO_ID::Success_Story_Akiko_Shioyama;
+					music->Play(audio_id, true);
+					tittle.SetFrameIndexOfBitmap(5);
+					again[0].SetAnimation(60, false);
+					sub_phase = 4;
 				}
 			}
 		}
@@ -654,7 +674,7 @@ void CGameStateRun::game_model(GameType gametype)
 			{
 				if (touch_option_menu_first)
 				{
-					music->Play(11);
+					music->Play(AUDIO_ID::Touch_Check_Menu);
 					touch_option_menu_first = false;
 				}
 			}
@@ -665,7 +685,7 @@ void CGameStateRun::game_model(GameType gametype)
 		}
 		else if (sub_phase == 2)
 		{
-			if (!game_over)
+			if (!game_over && !game_success)
 			{
 				if (game_next_decline_time <= clock())
 				{
@@ -679,16 +699,29 @@ void CGameStateRun::game_model(GameType gametype)
 				{
 					game_exit_animation();
 				}
-				if (tetris_game.lines >= current_blitz_lines)
+				if (tetris_game.lines >= blitz_level_to_lines[tetris_game.level])
 				{
-					tetris_game.lines -= current_blitz_lines;
+					tetris_game.lines -= blitz_level_to_lines[tetris_game.level];
 					tetris_game.level += 1;
-					current_blitz_lines += 2;
-					game_decline_time_interval = blitz_level_arr[tetris_game.level];
+					game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
 				}
 				if (game_current_time == 0)
 				{
+					game_success = true;
+				}
+			}
+			else if (game_over)
+			{
+				if (!game_over_animation())
+				{
 					music->Stop(audio_id);
+					music->Play(AUDIO_ID::Game_Over_Menu);
+					sub_phase = 3;
+				}
+			}
+			else {
+				if (!game_success_animation())
+				{
 					audio_id = AUDIO_ID::Philosophy;
 					music->Play(audio_id, true);
 					game_record_current_time();
@@ -696,15 +729,6 @@ void CGameStateRun::game_model(GameType gametype)
 					tittle.SetFrameIndexOfBitmap(6);
 					again[1].SetAnimation(60, false);
 					sub_phase = 4;
-				}
-			}
-			else
-			{
-				if (!game_over_animation())
-				{
-					music->Stop(audio_id);
-					music->Play(AUDIO_ID::Game_Over_Menu);
-					sub_phase = 3;
 				}
 			}
 		}
@@ -956,6 +980,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Cube_Clear, "resources/Cube_Clear.wav");
 	music->Load(AUDIO_ID::Cube_Full_Clear, "resources/Cube_Full_Clear.wav");
 	music->Load(AUDIO_ID::Game_Over, "resources/Game_Over.wav");
+	music->Load(AUDIO_ID::Game_Finish, "resources/Game_Finish.wav");
 	music->Load(AUDIO_ID::Game_Over_Menu, "resources/Game_Over_Menu.wav");
 	music->Load(AUDIO_ID::Level_Up, "resources/level_Up.wav");
 	music->Load(AUDIO_ID::Exit_Process_Game, "resources/Exit_Process_Game.wav");
@@ -1169,7 +1194,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	fire[3].SetAnimation(16, true);
 	fire[3].SetTopLeft(1050, 870);
-	fire_animation = true;
+	fire_animation_check = true;
 
 	level_up_scene.LoadBitmapByString({ "resources/level_up_cutscene_1.bmp", "resources/level_up_cutscene_2.bmp", "resources/level_up_cutscene_3.bmp", "resources/level_up_cutscene_4.bmp",
 	"resources/level_up_cutscene_5.bmp", "resources/level_up_cutscene_6.bmp", "resources/level_up_cutscene_7.bmp", "resources/level_up_cutscene_8.bmp",
@@ -1237,10 +1262,14 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	back_to_tittle.SetTopLeft(1921, 200);
 	back_to_tittle_selected = false;
 
-	fire_animation = true;
+	fire_animation_check = true;
 	
-	blitz_level_arr = { {1, 1000}, {2, 643} , {3, 404}, {4, 249},
-	{5, 111}, {6, 88}, {7, 50}, {8, 28}, {9, 15}, {10, 8} };
+	blitz_level_to_speed = { {1, 1000}, {2, 643} , {3, 404}, {4, 249},
+	{5, 111}, {6, 88}, {7, 50}, {8, 28}, {9, 15}, {10, 8}, {11, 4},
+	{12, 2}, {13, 1}, {14, 1}, {15, 1} };
+
+	blitz_level_to_lines = { {1, 3}, {2, 5}, {3, 7}, {4, 9}, {5, 11}, {6, 13},{7, 15}, 
+	{8, 17}, {9, 19}, {10, 21}, {11, 24}, {12, 26}, {13, 28}, {14, 30}, {15, 32} };
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -1260,21 +1289,21 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 				{
 					game_next_move_time = clock();
 					down_key_down = true;
-					game_move_time_interval = 110;
+					game_move_time_interval = 100;
 				}
 				else if (nChar == VK_LEFT)
 				{
 					game_next_move_time = clock();
 					left_key_down = true;
 					right_key_down = false;
-					game_move_time_interval = 110;
+					game_move_time_interval = 100;
 				}
 				else if (nChar == VK_RIGHT)
 				{
 					game_next_move_time = clock();
 					left_key_down = false;
 					right_key_down = true;
-					game_move_time_interval = 110;
+					game_move_time_interval = 100;
 				}
 				else if (nChar == VK_SPACE)
 				{
@@ -1385,7 +1414,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			{
 				if (click_check(nFlags, point, fourtyl_menu_check[i]))
 				{
-					music->Play(10);
+					music->Play(AUDIO_ID::Click_Check_Menu);
 					if (fourtyl_menu_check[i].GetFrameIndexOfBitmap() == 0)
 					{
 						fourtyl_menu_check[i].SetFrameIndexOfBitmap(1);
@@ -1453,7 +1482,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			{
 				if (click_check(nFlags, point, blitz_menu_check[i]))
 				{
-					music->Play(10);
+					music->Play(AUDIO_ID::Click_Check_Menu);
 					if (blitz_menu_check[i].GetFrameIndexOfBitmap() == 0)
 					{
 						blitz_menu_check[i].SetFrameIndexOfBitmap(1);
@@ -1669,6 +1698,15 @@ void CGameStateRun::OnShow()
 					fire.ShowBitmap();
 				});
 			}
+
+			if (game_success) {
+				CDC *pDC = CDDraw::GetBackCDC();
+
+				CTextDraw::ChangeFontLog(pDC, 80, "微軟正黑體", RGB(238, 255, 26), 50);
+				CTextDraw::Print(pDC, 841, 480, "Finish");
+
+				CDDraw::ReleaseBackCDC();
+			}
 		}
 		else if (sub_phase == 3)
 		{
@@ -1715,8 +1753,8 @@ void CGameStateRun::OnShow()
 			background.ShowBitmap();
 
 			display_game();
-			display_lines(current_blitz_lines);
-			display_lines_graph(current_blitz_lines);
+			display_lines(blitz_level_to_lines[tetris_game.level]);
+			display_lines_graph(blitz_level_to_lines[tetris_game.level]);
 			display_on_left_level();
 			display_play_remaining_time();
 			display_on_right_score();
@@ -1728,6 +1766,16 @@ void CGameStateRun::OnShow()
 				{
 					fire.ShowBitmap();
 				});
+			}
+
+
+			if (game_success) {
+				CDC *pDC = CDDraw::GetBackCDC();
+
+				CTextDraw::ChangeFontLog(pDC, 80, "微軟正黑體", RGB(238, 255, 26), 50);
+				CTextDraw::Print(pDC, 841, 480, "Finish");
+
+				CDDraw::ReleaseBackCDC();
 			}
 		}
 		else if (sub_phase == 3)

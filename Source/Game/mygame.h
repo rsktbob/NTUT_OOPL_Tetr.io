@@ -10,6 +10,7 @@
 #include <vector>
 #include <deque>
 #include <ctime>
+#include <queue>
 
 using namespace std;
 
@@ -72,7 +73,8 @@ namespace game_framework {
 	// Constants
 	/////////////////////////////////////////////////////////////////////////////
 
-	enum AUDIO_ID {				// 定義各種音效的編號
+	enum AUDIO_ID
+	{ // 定義各種音效的編號
 		Arial_City,
 		To_The_Limit,
 		The_Great_Eastern_Expedition,
@@ -96,6 +98,7 @@ namespace game_framework {
 		Cube_Clear,
 		Cube_Full_Clear,
 		Game_Over,
+		Game_Finish,
 		Game_Over_Menu,
 		Level_Up,
 		Exit_Process_Game,
@@ -118,7 +121,8 @@ namespace game_framework {
 
 	using Canvas = vector<vector<Color>>;
 
-	enum class Event {
+	enum class Event
+	{
 		left,
 		right,
 		down,
@@ -127,12 +131,14 @@ namespace game_framework {
 		hold
 	};
 
-	enum class HorizontalDirection {
+	enum class HorizontalDirection
+	{
 		left,
 		right
 	};
 
-	struct GameState {
+	struct GameState
+	{
 		int lines;
 		int score;
 		bool game_over;
@@ -141,7 +147,8 @@ namespace game_framework {
 		Canvas hold_canvas;
 	};
 
-	enum class GameType {
+	enum class GameType
+	{
 		fourtyl,
 		blitz,
 		zen
@@ -160,8 +167,7 @@ namespace game_framework {
 		}
 		bool is_touched(CPoint point, CMovingBitmap character)
 		{
-			if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth()
-				&& point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight())
+			if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth() && point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight())
 			{
 				return true;
 			}
@@ -169,7 +175,6 @@ namespace game_framework {
 		}
 		Button() : CMovingBitmap()
 		{
-
 		}
 	};
 
@@ -188,66 +193,56 @@ namespace game_framework {
 			y = -height() + 1;
 		}
 
-		static Tromino random_tromino()
+		static Tromino according_color_tromino(Color color)
 		{
-			Color color;
 			TrominoMatrix matrix;
 
-			int tromino_type_count = 7;
 			// https://stackoverflow.com/a/47588671
-			int random_number = rand() % tromino_type_count;
-
 			// https://tetris.wiki/Tetromino#The_basic_tetrominoes
-			if (random_number == 0)
+			switch (color)
 			{
-				color = Color::light_blue;
+			case Color::light_blue:
 				matrix = {
 					{1, 1, 1, 1},
 				};
-			}
-			else if (random_number == 1)
-			{
-				color = Color::yellow;
+				break;
+
+			case Color::yellow:
 				matrix = {
 					{1, 1},
 					{1, 1},
 				};
-			}
-			else if (random_number == 2)
-			{
-				color = Color::purple;
+				break;
+
+			case Color::purple:
 				matrix = {
 					{0, 1, 0},
 					{1, 1, 1},
 				};
-			}
-			else if (random_number == 3)
-			{
-				color = Color::green;
+				break;
+
+			case Color::green:
 				matrix = {
 					{0, 1, 1},
 					{1, 1, 0},
 				};
-			}
-			else if (random_number == 4)
-			{
-				color = Color::red;
+				break;
+
+			case Color::red:
 				matrix = {
 					{1, 1, 0},
 					{0, 1, 1},
 				};
-			}
-			else if (random_number == 5)
-			{
-				color = Color::blue;
+				break;
+
+			case Color::blue:
 				matrix = {
 					{1, 0, 0},
 					{1, 1, 1},
 				};
-			}
-			else
-			{
-				color = Color::orange;
+				break;
+
+			case Color::orange:
 				matrix = {
 					{0, 0, 1},
 					{1, 1, 1},
@@ -315,8 +310,8 @@ namespace game_framework {
 				return Color::orange;
 			}
 		}
-		
-TrominoMatrix according_color_return_matrix()
+
+		TrominoMatrix according_color_return_matrix()
 		{
 			switch (color)
 			{
@@ -346,22 +341,37 @@ TrominoMatrix according_color_return_matrix()
 		}
 	};
 
-	class TetrisGame {
+	class TetrisGame
+	{
 	public:
 		int lines = 0;
 		int score = 0;
 		int level = 1;
 		int init_time = 0;
 
-		optional<Tromino> active_tromino = Tromino::random_tromino();
-		deque<Tromino> next_tromino_array = { Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino(), Tromino::random_tromino() , Tromino::random_tromino() };
+		optional<Tromino> active_tromino;
+		deque<Tromino> next_tromino_array;
 		optional<Tromino> hold_tromino;
+		queue<Color> random_color_array;
 		Canvas canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
 		Canvas place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
 		Canvas hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
 		bool hold_once_per_round = true;
-		
-		GameState event_handler(Event event) {
+
+		TetrisGame()
+		{
+			random_color_array = produce_seven_color_not_repeative();
+			active_tromino = Tromino::according_color_tromino(random_color_array.front());
+			random_color_array.pop();
+			for (unsigned i = 0; i < 5; i++)
+			{
+				next_tromino_array.emplace_back(Tromino::according_color_tromino(random_color_array.front()));
+				random_color_array.pop();
+			}
+		}
+
+		GameState event_handler(Event event)
+		{
 			// Generate a new tromino if active_tromino is null
 			if (!this->active_tromino.has_value())
 			{
@@ -372,31 +382,43 @@ TrominoMatrix according_color_return_matrix()
 				}
 				this->active_tromino.emplace(next_tromino_array.front());
 				next_tromino_array.pop_front();
-				next_tromino_array.emplace_back(Tromino::random_tromino());
+				if (random_color_array.empty())
+				{
+					random_color_array = produce_seven_color_not_repeative();
+				}
+				next_tromino_array.emplace_back(Tromino::according_color_tromino(random_color_array.front()));
+				random_color_array.pop();
 				hold_once_per_round = true;
 			}
 
 			remove_active_tromino_from_canvas();
 
 			// Move/drop/rotate/fall tromino based on event
-			if (event == Event::left) {
+			if (event == Event::left)
+			{
 				move_active_tromino_left();
 			}
-			else if (event == Event::right) {
+			else if (event == Event::right)
+			{
 				move_active_tromino_right();
 			}
-			else if (event == Event::rotate) {
+			else if (event == Event::rotate)
+			{
 				rotate_active_tromino();
 			}
-			else if (event == Event::down) {
-				while (!is_active_tromino_reached_bottom()) {
+			else if (event == Event::down)
+			{
+				while (!is_active_tromino_reached_bottom())
+				{
 					active_tromino->y += 1;
 				}
 			}
-			else if (event == Event::tick) {
+			else if (event == Event::tick)
+			{
 				active_tromino->y += 1;
 			}
-			else if (event == Event::hold) {
+			else if (event == Event::hold)
+			{
 				hold_active_tromino();
 			}
 
@@ -407,7 +429,8 @@ TrominoMatrix according_color_return_matrix()
 
 			bool game_over = false;
 
-			if (is_active_tromino_reached_bottom()) {
+			if (is_active_tromino_reached_bottom())
+			{
 
 				remove_and_prepend_rows();
 
@@ -421,29 +444,37 @@ TrominoMatrix according_color_return_matrix()
 			return { lines, score, game_over, canvas, place_canvas, hold_canvas };
 		}
 
-		void remove_active_tromino_from_canvas() {
-			for (unsigned row_index = 0; row_index < active_tromino->matrix.size(); row_index++) {
-				for (unsigned column_index = 0; column_index < active_tromino->matrix[row_index].size(); column_index++) {
+		void remove_active_tromino_from_canvas()
+		{
+			for (unsigned row_index = 0; row_index < active_tromino->matrix.size(); row_index++)
+			{
+				for (unsigned column_index = 0; column_index < active_tromino->matrix[row_index].size(); column_index++)
+				{
 					int y = active_tromino->y + row_index;
-					if (y >= 0) canvas[y][active_tromino->x + column_index] = Color::black;
+					if (y >= 0)
+						canvas[y][active_tromino->x + column_index] = Color::black;
 				}
 			}
 		}
 
-		bool is_horizontal_side_clear(HorizontalDirection direction) {
+		bool is_horizontal_side_clear(HorizontalDirection direction)
+		{
 			int active_tromino_right = active_tromino->x + (active_tromino->width() - 1);
 
-			if (direction == HorizontalDirection::left ? (active_tromino->x == 0) : (active_tromino_right == CANVAS_WIDTH - 1)) {
+			if (direction == HorizontalDirection::left ? (active_tromino->x == 0) : (active_tromino_right == CANVAS_WIDTH - 1))
+			{
 				return false;
 			}
 
 			int column_index_to_check = direction == HorizontalDirection::left ? active_tromino->x - 1 : active_tromino_right + 1;
 
-			for (int row_index = 0; row_index < active_tromino->height(); row_index++) {
+			for (int row_index = 0; row_index < active_tromino->height(); row_index++)
+			{
 				// `auto` doesn't work as active_tromino->y maybe negative
 				int y = active_tromino->y + row_index;
 
-				if (y > 0 && canvas[y][column_index_to_check] != Color::black) {
+				if (y > 0 && canvas[y][column_index_to_check] != Color::black)
+				{
 					return false;
 				}
 			}
@@ -451,31 +482,40 @@ TrominoMatrix according_color_return_matrix()
 			return true;
 		}
 
-		void move_active_tromino_left() {
-			if (is_horizontal_side_clear(HorizontalDirection::left)) active_tromino->x -= 1;
+		void move_active_tromino_left()
+		{
+			if (is_horizontal_side_clear(HorizontalDirection::left))
+				active_tromino->x -= 1;
 		}
 
-		void move_active_tromino_right() {
-			if (is_horizontal_side_clear(HorizontalDirection::right)) active_tromino->x += 1;
+		void move_active_tromino_right()
+		{
+			if (is_horizontal_side_clear(HorizontalDirection::right))
+				active_tromino->x += 1;
 		}
 
-		void rotate_active_tromino() {
+		void rotate_active_tromino()
+		{
 			TrominoMatrix new_matrix(active_tromino->width(), vector<char>(active_tromino->height(), 0));
 
-			for (unsigned row_index = 0; row_index < active_tromino->matrix.size(); row_index++) {
-				for (unsigned column_index = 0; column_index < active_tromino->matrix[row_index].size(); column_index++) {
+			for (unsigned row_index = 0; row_index < active_tromino->matrix.size(); row_index++)
+			{
+				for (unsigned column_index = 0; column_index < active_tromino->matrix[row_index].size(); column_index++)
+				{
 					new_matrix[column_index][active_tromino->height() - 1 - row_index] = active_tromino->matrix[row_index][column_index];
 				}
 			}
 
 			active_tromino->matrix = new_matrix;
 
-			if (active_tromino->x + (active_tromino->width() - 1) >= CANVAS_WIDTH) {
+			if (active_tromino->x + (active_tromino->width() - 1) >= CANVAS_WIDTH)
+			{
 				active_tromino->x = CANVAS_WIDTH - active_tromino->width();
 			}
 		}
 
-		void hold_active_tromino() {
+		void hold_active_tromino()
+		{
 			if (hold_once_per_round)
 			{
 				if (hold_tromino.has_value())
@@ -489,26 +529,37 @@ TrominoMatrix according_color_return_matrix()
 					hold_tromino = Tromino(Color::grey, active_tromino->according_color_return_matrix());
 					active_tromino = next_tromino_array.front();
 					next_tromino_array.pop_front();
-					next_tromino_array.emplace_back(Tromino::random_tromino());
+					if (random_color_array.empty())
+					{
+						random_color_array = produce_seven_color_not_repeative();
+					}
+					next_tromino_array.emplace_back(Tromino::according_color_tromino(random_color_array.front()));
+					random_color_array.pop();
 				}
 				hold_once_per_round = false;
 			}
 		}
 
-		bool is_active_tromino_reached_bottom() {
-			if (active_tromino->y + active_tromino->height() >= CANVAS_HEIGHT) {
+		bool is_active_tromino_reached_bottom()
+		{
+			if (active_tromino->y + active_tromino->height() >= CANVAS_HEIGHT)
+			{
 				return true;
 			}
 
 			// Loop from left to right
-			for (int column_index = 0; column_index < active_tromino->width(); column_index++) {
+			for (int column_index = 0; column_index < active_tromino->width(); column_index++)
+			{
 				// Loop from bottom to top
-				for (int row_index = active_tromino->height() - 1; row_index >= 0; row_index--) {
-					if (active_tromino->matrix[row_index][column_index] == 1) {
+				for (int row_index = active_tromino->height() - 1; row_index >= 0; row_index--)
+				{
+					if (active_tromino->matrix[row_index][column_index] == 1)
+					{
 						int y = active_tromino->y + row_index + 1;
 
 						// There is something in the canvas below the bottommost `1` cell
-						if (y >= 0 && canvas[y][active_tromino->x + column_index] != Color::black) {
+						if (y >= 0 && canvas[y][active_tromino->x + column_index] != Color::black)
+						{
 							return true;
 						}
 
@@ -521,22 +572,27 @@ TrominoMatrix according_color_return_matrix()
 			return false;
 		}
 
-		void render_active_tromino_to_canvas() {
-			for (unsigned row_index = 0; row_index < active_tromino->matrix.size(); row_index++) {
+		void render_active_tromino_to_canvas()
+		{
+			for (unsigned row_index = 0; row_index < active_tromino->matrix.size(); row_index++)
+			{
 				auto row = active_tromino->matrix[row_index];
-				for (unsigned column_index = 0; column_index < row.size(); column_index++) {
+				for (unsigned column_index = 0; column_index < row.size(); column_index++)
+				{
 					auto cell = row[column_index];
 					unsigned y = active_tromino->y + row_index;
 					unsigned x = active_tromino->x + column_index;
 					// y maybe negative
-					if (cell == 1 && y >= 0 && y < canvas.size()) {
+					if (cell == 1 && y >= 0 && y < canvas.size())
+					{
 						canvas[y][x] = active_tromino->color;
 					}
 				}
 			}
 		}
 
-		void render_next_tromino_array_to_place_canvas() {
+		void render_next_tromino_array_to_place_canvas()
+		{
 			// update place_cube_canvas
 			for (unsigned i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
 			{
@@ -561,7 +617,8 @@ TrominoMatrix according_color_return_matrix()
 			}
 		}
 
-		void render_hold_tromino_to_hold_canvas() {
+		void render_hold_tromino_to_hold_canvas()
+		{
 			if (hold_tromino.has_value())
 			{
 				for (unsigned i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
@@ -585,7 +642,8 @@ TrominoMatrix according_color_return_matrix()
 		// Remove filled rows, prepend empty rows, and update scores in the process
 		void remove_and_prepend_rows();
 
-		bool is_game_over() {
+		bool is_game_over()
+		{
 			// The first row (index 0) and the second row (index 1) is transparent and for preview purposes only,
 			// thus not counted as a row
 			auto topmost_row = canvas[PREVIEW_ROW_COUNT];
@@ -594,8 +652,8 @@ TrominoMatrix according_color_return_matrix()
 			return any_of(
 				topmost_row.begin(),
 				topmost_row.end(),
-				[](Color color) { return color != Color::black; }
-			);
+				[](Color color)
+			{ return color != Color::black; });
 		}
 
 		int random_score()
@@ -604,11 +662,27 @@ TrominoMatrix according_color_return_matrix()
 			int min = 40;
 			return rand() % (max - min + 1) + min;
 		}
-		
-		void clear_all_canvas() {
+
+		void clear_all_canvas()
+		{
 			canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
 			place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
 			hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
+		}
+
+		queue<Color> produce_seven_color_not_repeative()
+		{
+			vector<Color> color_arr = { light_blue, yellow, purple, green, red, blue, orange };
+			queue<Color> random_color_arr;
+			for (int i = 0; i < 7; i++)
+			{
+				int random_pos = i + rand() % (7-i);
+				random_color_arr.push(color_arr[random_pos]);
+				Color key = color_arr[i];
+				color_arr[i] = color_arr[random_pos];
+				color_arr[random_pos] = key;
+			}
+			return random_color_arr;
 		}
 	};
 
@@ -652,6 +726,7 @@ TrominoMatrix according_color_return_matrix()
 		bool touch_check(CPoint point, CMovingBitmap character);
 		void touch_option_menu(CPoint point);
 		bool game_over_animation();
+		bool game_success_animation();
 		void game_level_up_animation();
 		void game_exit_animation();
 		void display_game();
@@ -684,8 +759,9 @@ TrominoMatrix according_color_return_matrix()
 		int phase;
 		int sub_phase;
 		int id;
-		bool fire_animation;
-		bool level_up_animation;
+		bool fire_animation_check;
+		bool level_up_animation_check;
+		bool finish_animation_check;
 		
 		bool touch_menu_check_first;
 		bool touch_option_menu_first;
@@ -746,8 +822,9 @@ TrominoMatrix according_color_return_matrix()
 		bool down_key_down;
 		bool exit_check;
 		bool game_over;
-		int current_blitz_lines;
-		map<int, int> blitz_level_arr;
+		bool game_success;
+		map<int, int> blitz_level_to_speed;
+		map<int, int> blitz_level_to_lines;
 
 		CMovingBitmap retry;
 		bool retry_selected;
