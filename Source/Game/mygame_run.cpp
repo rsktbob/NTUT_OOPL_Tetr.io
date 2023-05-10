@@ -19,16 +19,18 @@ CAudio* music = CAudio::Instance();
 /////////////////////////////////////////////////////////////////////////////
 
 void TetrisGame::remove_and_prepend_rows() {
+	int per_round_lines = 0;
 	for (unsigned row_index = 0; row_index < canvas.size(); row_index++) {
 		vector<Color> row = canvas[row_index];
 		if (all_of(row.begin(), row.end(), [](Color color) { return color != Color::black; })) {
 			music->Play(AUDIO_ID::Cube_Clear);
-			lines += 1;
-			score += 150;
+			per_round_lines += 1;
 			canvas.erase(canvas.begin() + row_index);
 			canvas.insert(canvas.begin(), vector<Color>(CANVAS_WIDTH, Color::black));
 		}
 	}
+	lines += per_round_lines;
+	per_round_score += cleared_lines_to_get_score[per_round_lines];
 }
 
 bool CGameStateRun::click_check(UINT nFlags, CPoint point, CMovingBitmap character)
@@ -89,6 +91,7 @@ CMovingBitmap CGameStateRun::Cube()
 	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_light_blue.bmp", "resources/cube_yellow.bmp", "resources/cube_purple.bmp",  "resources/cube_green.bmp",
 		"resources/cube_red.bmp", "resources/cube_blue.bmp",  "resources/cube_orange.bmp", "resources/cube_grey.bmp" });
 	cube.LoadBitmapByString({ "resources/cube_transparent.bmp" }, RGB(255, 255, 255));
+	cube.LoadBitmapByString({ "resources/cube_translucent.bmp" });
 	return cube;
 }
 
@@ -172,7 +175,7 @@ void CGameStateRun::display_play_remaining_time()
 {
 	if (!game_over)
 	{
-		game_current_time = 120000 - (clock() - tetris_game.init_time) < 0 ? 0 : 120000 - (clock() - tetris_game.init_time);
+		game_current_time = 120000 - (clock() - tetris_game.init_time) >= 0 ? 120000 - (clock() - tetris_game.init_time) : 0;
 		game_minutes = game_current_time / 60000;
 		game_seconds = (game_current_time / 1000) % 60;
 		game_milliseconds = game_current_time % 1000;
@@ -319,7 +322,22 @@ void CGameStateRun::display_play_total_score()
 	CDDraw::ReleaseBackCDC();
 }
 
-bool  CGameStateRun::game_over_animation()
+void  CGameStateRun::display_reciprocal_animation()
+{
+	if (120000 - (clock() - tetris_game.init_time) <= 10000 && 120000 - (clock() - tetris_game.init_time) > 0)
+	{
+		string reciprocal_num = to_string(120000 - (clock() - tetris_game.init_time) < 0 ? 0 : (int)ceil((120000 - (double)(clock() - tetris_game.init_time)) / 1000));
+		unsigned reciprocal_num_displacement = reciprocal_num.length() * 35;
+		CDC *pDC = CDDraw::GetBackCDC();
+
+		CTextDraw::ChangeFontLog(pDC, 120, "微軟正黑體", RGB(247, 193, 4), 50);
+		CTextDraw::Print(pDC, 950 - reciprocal_num_displacement, 485, reciprocal_num);
+
+		CDDraw::ReleaseBackCDC();
+	}
+}
+
+bool CGameStateRun::game_over_animation()
 {
 	cube_place.SetFrameIndexOfBitmap(1);
 	if (fire_animation_check)
@@ -551,7 +569,7 @@ void CGameStateRun::game_control()
 		game_update(Event::tick);
 	}
 	game_next_move_time = clock() + game_move_time_interval;
-	game_move_time_interval = 50;
+	game_move_time_interval = 55;
 }
 
 void CGameStateRun::game_record_current_time()
@@ -1289,21 +1307,21 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 				{
 					game_next_move_time = clock();
 					down_key_down = true;
-					game_move_time_interval = 100;
+					game_move_time_interval = 110;
 				}
 				else if (nChar == VK_LEFT)
 				{
 					game_next_move_time = clock();
 					left_key_down = true;
 					right_key_down = false;
-					game_move_time_interval = 100;
+					game_move_time_interval = 110;
 				}
 				else if (nChar == VK_RIGHT)
 				{
 					game_next_move_time = clock();
 					left_key_down = false;
 					right_key_down = true;
-					game_move_time_interval = 100;
+					game_move_time_interval = 110;
 				}
 				else if (nChar == VK_SPACE)
 				{
@@ -1758,6 +1776,7 @@ void CGameStateRun::OnShow()
 			display_on_left_level();
 			display_play_remaining_time();
 			display_on_right_score();
+			display_reciprocal_animation();
 			exit_scene.ShowBitmap();
 
 			if (game_over)

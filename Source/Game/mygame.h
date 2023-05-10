@@ -116,7 +116,8 @@ namespace game_framework {
 		blue,
 		orange,
 		grey,
-		transparent
+		transparent,
+		translucent
 	};
 
 	using Canvas = vector<vector<Color>>;
@@ -348,8 +349,11 @@ namespace game_framework {
 		int score = 0;
 		int level = 1;
 		int init_time = 0;
+		int per_round_score = 0;
+		map<int, int> cleared_lines_to_get_score = { {1, 100}, {2, 300}, {3, 500}, {4, 800} };
 
 		optional<Tromino> active_tromino;
+		optional<Tromino> predict_tromino;
 		deque<Tromino> next_tromino_array;
 		optional<Tromino> hold_tromino;
 		queue<Color> random_color_array;
@@ -362,6 +366,7 @@ namespace game_framework {
 		{
 			random_color_array = produce_seven_color_not_repeative();
 			active_tromino = Tromino::according_color_tromino(random_color_array.front());
+			predict_tromino_landing_position();
 			random_color_array.pop();
 			for (unsigned i = 0; i < 5; i++)
 			{
@@ -375,12 +380,14 @@ namespace game_framework {
 			// Generate a new tromino if active_tromino is null
 			if (!this->active_tromino.has_value())
 			{
-				score += random_score();
+				score += per_round_score;
+				per_round_score = 0;
 				if (hold_tromino.has_value())
 				{
 					hold_tromino->color = hold_tromino->according_matrix_return_color();
 				}
 				this->active_tromino.emplace(next_tromino_array.front());
+				predict_tromino_landing_position();
 				next_tromino_array.pop_front();
 				if (random_color_array.empty())
 				{
@@ -397,37 +404,49 @@ namespace game_framework {
 			if (event == Event::left)
 			{
 				move_active_tromino_left();
+				remove_predict_tromino_from_canvas();
+				predict_tromino_landing_position();
 			}
 			else if (event == Event::right)
 			{
 				move_active_tromino_right();
+				remove_predict_tromino_from_canvas();
+				predict_tromino_landing_position();
 			}
 			else if (event == Event::rotate)
 			{
 				rotate_active_tromino();
+				remove_predict_tromino_from_canvas();
+				predict_tromino_landing_position();
 			}
 			else if (event == Event::down)
 			{
 				while (!is_active_tromino_reached_bottom())
 				{
 					active_tromino->y += 1;
+					per_round_score += 2;
 				}
 			}
 			else if (event == Event::tick)
 			{
 				active_tromino->y += 1;
+				per_round_score += 1;
 			}
 			else if (event == Event::hold)
 			{
 				hold_active_tromino();
+				remove_predict_tromino_from_canvas();
+				predict_tromino_landing_position();
 			}
 
 			// Render active_tromino before proceeding as it may be reset later on
+
+			bool game_over = false;
+
+			render_predict_tromino_to_canvas();
 			render_active_tromino_to_canvas();
 			render_next_tromino_array_to_place_canvas();
 			render_hold_tromino_to_hold_canvas();
-
-			bool game_over = false;
 
 			if (is_active_tromino_reached_bottom())
 			{
@@ -437,11 +456,31 @@ namespace game_framework {
 				// Set active_tromino to null and generate a new tromino on the next process
 				active_tromino.reset();
 
+				predict_tromino.reset();
+
 				// Only check for game over if active_tromino reached bottom
 				game_over = is_game_over();
 			}
 
 			return { lines, score, game_over, canvas, place_canvas, hold_canvas };
+		}
+
+		void remove_predict_tromino_from_canvas()
+		{
+			for (unsigned row_index = 0; row_index < predict_tromino->matrix.size(); row_index++)
+			{
+				for (unsigned column_index = 0; column_index < predict_tromino->matrix[row_index].size(); column_index++)
+				{
+					int y = predict_tromino->y + row_index;
+					if (y >= 0)
+					{
+						if (predict_tromino->matrix[row_index][column_index] == 1)
+						{
+							canvas[y][predict_tromino->x + column_index] = Color::black;
+						}
+					}
+				}
+			}
 		}
 
 		void remove_active_tromino_from_canvas()
@@ -451,8 +490,13 @@ namespace game_framework {
 				for (unsigned column_index = 0; column_index < active_tromino->matrix[row_index].size(); column_index++)
 				{
 					int y = active_tromino->y + row_index;
-					if (y >= 0)
-						canvas[y][active_tromino->x + column_index] = Color::black;
+					if (y >= 0) 
+					{
+						if (active_tromino->matrix[row_index][column_index] == 1)
+						{
+							canvas[y][active_tromino->x + column_index] = Color::black;
+						}
+					}
 				}
 			}
 		}
@@ -558,7 +602,7 @@ namespace game_framework {
 						int y = active_tromino->y + row_index + 1;
 
 						// There is something in the canvas below the bottommost `1` cell
-						if (y >= 0 && canvas[y][active_tromino->x + column_index] != Color::black)
+						if (y >= 0 && canvas[y][active_tromino->x + column_index] != Color::black && canvas[y][active_tromino->x + column_index] != Color::translucent)
 						{
 							return true;
 						}
@@ -570,6 +614,57 @@ namespace game_framework {
 			}
 
 			return false;
+		}
+
+		bool is_predict_tromino_reached_bottom()
+		{
+			if (predict_tromino->y + predict_tromino->height() >= CANVAS_HEIGHT)
+			{
+				return true;
+			}
+
+			// Loop from left to right
+			for (int column_index = 0; column_index < predict_tromino->width(); column_index++)
+			{
+				// Loop from bottom to top
+				for (int row_index = predict_tromino->height() - 1; row_index >= 0; row_index--)
+				{
+					if (predict_tromino->matrix[row_index][column_index] == 1)
+					{
+						int y = predict_tromino->y + row_index + 1;
+
+						// There is something in the canvas below the bottommost `1` cell
+						if (y >= 0 && canvas[y][predict_tromino->x + column_index] != Color::black)
+						{
+							return true;
+						}
+
+						// Continue to the next column after checking the first cell with `1`
+						break;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		void render_predict_tromino_to_canvas()
+		{
+			for (unsigned row_index = 0; row_index < predict_tromino->matrix.size(); row_index++)
+			{
+				auto row = predict_tromino->matrix[row_index];
+				for (unsigned column_index = 0; column_index < row.size(); column_index++)
+				{
+					auto cell = row[column_index];
+					unsigned y = predict_tromino->y + row_index;
+					unsigned x = predict_tromino->x + column_index;
+					// y maybe negative
+					if (cell == 1 && y >= 0 && y < canvas.size())
+					{
+						canvas[y][x] = predict_tromino->color;
+					}
+				}
+			}
 		}
 
 		void render_active_tromino_to_canvas()
@@ -639,6 +734,17 @@ namespace game_framework {
 			}
 		}
 
+		void predict_tromino_landing_position()
+		{
+			predict_tromino.reset();
+			predict_tromino.emplace(active_tromino.value());
+			predict_tromino->color = Color::translucent;
+			while (!is_predict_tromino_reached_bottom())
+			{
+				predict_tromino->y += 1;
+			}
+		}
+
 		// Remove filled rows, prepend empty rows, and update scores in the process
 		void remove_and_prepend_rows();
 
@@ -654,13 +760,6 @@ namespace game_framework {
 				topmost_row.end(),
 				[](Color color)
 			{ return color != Color::black; });
-		}
-
-		int random_score()
-		{
-			int max = 80;
-			int min = 40;
-			return rand() % (max - min + 1) + min;
 		}
 
 		void clear_all_canvas()
@@ -737,6 +836,7 @@ namespace game_framework {
 		void display_on_right_score();
 		void display_on_button_level();
 		void display_on_left_level();
+		void display_reciprocal_animation();
 		void display_lines_graph(unsigned lines_total);
 		void display_play_total_time();
 		void display_play_real_time(COLORREF color);
