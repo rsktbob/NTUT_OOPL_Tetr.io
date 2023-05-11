@@ -126,73 +126,64 @@ void CGameStateRun::display_game()
 
 void CGameStateRun::display_lines(unsigned lines_total)
 {
-	if (!game_over)
-	{
-		lines_displacement_front = (to_string(tetris_game.lines).size() - 1) * 20 - (2 - to_string(lines_total).size()) * 15;
-		lines_displacement_back = (2 - to_string(lines_total).size()) * 15;
-		sprintf(lines_display_front, "%d", tetris_game.lines);
-		sprintf(lines_display_back, "/%d", lines_total);
+	lines_displacement_front = (to_string(tetris_game.lines).size() - 1) * 20 - (2 - to_string(lines_total).size()) * 15;
+	lines_displacement_back = (2 - to_string(lines_total).size()) * 15;
+	sprintf(lines_display_front, "%d", tetris_game.lines);
+	sprintf(lines_display_back, "/%d", lines_total);
 
-		CDC *pDC = CDDraw::GetBackCDC();
+	CDC *pDC = CDDraw::GetBackCDC();
 
-		CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 710, 715, "LINES");
-		CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", RGB(255, 255, 255), 200);
-		CTextDraw::Print(pDC, 707 - lines_displacement_front, 740, lines_display_front);
-		CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", RGB(255, 255, 255), 200);
-		CTextDraw::Print(pDC, 733 + lines_displacement_back , 754, lines_display_back);
+	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 710, 715+font_decline_distance, "LINES");
+	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 200);
+	CTextDraw::Print(pDC, 707 - lines_displacement_front, 740+font_decline_distance, lines_display_front);
+	CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", font_color, 200);
+	CTextDraw::Print(pDC, 733 + lines_displacement_back , 754+font_decline_distance, lines_display_back);
 
-		CDDraw::ReleaseBackCDC();
-	}
+	CDDraw::ReleaseBackCDC();
 }
 
 
 void CGameStateRun::display_play_passed_time()
 {
-	if (!game_over)
-	{
-		game_current_time = clock() - tetris_game.init_time;
-		game_minutes = game_current_time / 60000;
-		game_seconds = (game_current_time / 1000) % 60;
-		game_milliseconds = game_current_time % 1000;
-		sprintf(time_display_front, "%d:%02d", game_minutes, game_seconds);
-		sprintf(time_display_back, ".%03d", game_milliseconds);
+	game_current_time = clock() - tetris_game.init_time;
+	game_minutes = game_current_time / 60000;
+	game_seconds = (game_current_time / 1000) % 60;
+	game_milliseconds = game_current_time % 1000;
+	sprintf(time_display_front, "%d:%02d", game_minutes, game_seconds);
+	sprintf(time_display_back, ".%03d", game_milliseconds);
 
-		CDC *pDC = CDDraw::GetBackCDC();
+	CDC *pDC = CDDraw::GetBackCDC();
 
-		CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 718, 800, "TIME");
-		CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 630, 825, time_display_front);
-		CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 715, 838, time_display_back);
+	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 718, 800+font_decline_distance, "TIME");
+	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 630, 825+font_decline_distance, time_display_front);
+	CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 715, 838+font_decline_distance, time_display_back);
 
-		CDDraw::ReleaseBackCDC();
-	}
+	CDDraw::ReleaseBackCDC();
 }
 
 void CGameStateRun::display_play_remaining_time()
 {
-	if (!game_over)
-	{
-		game_current_time = 120000 - (clock() - tetris_game.init_time) >= 0 ? 120000 - (clock() - tetris_game.init_time) : 0;
-		game_minutes = game_current_time / 60000;
-		game_seconds = (game_current_time / 1000) % 60;
-		game_milliseconds = game_current_time % 1000;
-		sprintf(time_display_front, "%d:%02d", game_minutes, game_seconds);
-		sprintf(time_display_back, ".%03d", game_milliseconds);
+	game_current_time = 120000 - (clock() - tetris_game.init_time) >= 0 ? 120000 - (clock() - tetris_game.init_time) : 0;
+	game_minutes = game_current_time / 60000;
+	game_seconds = (game_current_time / 1000) % 60;
+	game_milliseconds = game_current_time % 1000;
+	sprintf(time_display_front, "%d:%02d", game_minutes, game_seconds);
+	sprintf(time_display_back, ".%03d", game_milliseconds);
 
-		CDC *pDC = CDDraw::GetBackCDC();
+	CDC *pDC = CDDraw::GetBackCDC();
 
-		CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 718, 800, "TIME");
-		CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 630, 825, time_display_front);	
-		CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 715, 838, time_display_back);
+	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 718, 800 + font_decline_distance, "TIME");
+	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 630, 825 + font_decline_distance, time_display_front);	
+	CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 715, 838 + font_decline_distance, time_display_back);
 
-		CDDraw::ReleaseBackCDC();
-	}
+	CDDraw::ReleaseBackCDC();
 }
 
 void CGameStateRun::display_on_button_score()
@@ -214,24 +205,21 @@ void CGameStateRun::display_on_button_score()
 
 void CGameStateRun::display_on_right_score()
 {
-	if (!game_over)
+	score_display = to_string(tetris_game.score);
+	for (int i = score_display.length() - 3; i >= 1; i -= 3)
 	{
-		score_display = to_string(tetris_game.score);
-		for (int i = score_display.length() - 3; i >= 1; i -= 3)
-		{
-			score_display.insert(i, ",");
-		}
-
-		CDC *pDC = CDDraw::GetBackCDC();
-
-		CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 1145, 750, "SCORE");
-
-		CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 1145, 775, score_display);
-
-		CDDraw::ReleaseBackCDC();
+		score_display.insert(i, ",");
 	}
+
+	CDC *pDC = CDDraw::GetBackCDC();
+
+	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 1145, 750 + font_decline_distance, "SCORE");
+
+	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 1145, 775 + font_decline_distance, score_display);
+
+	CDDraw::ReleaseBackCDC();
 }
 
 
@@ -271,20 +259,16 @@ void CGameStateRun::display_on_left_level()
 void CGameStateRun::display_lines_graph(unsigned lines_total)
 {
 	int lines = (int)round(tetris_game.lines * ((double)40 / lines_total)) > 40 ? 40 : (int)round(tetris_game.lines * ((double)40 / lines_total));
-	if (!game_over)
+	for (int i = 0; i < lines; i++)
 	{
-		for (int i = 0; i < lines; i++)
+		if (i < lines - 1)
 		{
-			if (i < lines - 1)
-			{
-				lines_graph_body[i].SetTopLeft(1114, lines_graph_body[i].GetTop());
-				lines_graph_body[i].ShowBitmap();
-			}
-			else
-			{
-				lines_graph_top.SetTopLeft(1114, lines_graph_body[i].GetTop());
-				lines_graph_top.ShowBitmap();
-			}
+			lines_graph_body[i].ShowBitmap();
+		}
+		else
+		{
+			lines_graph_top.SetTopLeft(1114, lines_graph_body[i].GetTop());
+			lines_graph_top.ShowBitmap();
 		}
 	}
 }
@@ -343,39 +327,44 @@ bool CGameStateRun::game_over_animation()
 	if (fire_animation_check)
 	{
 		music->Play(AUDIO_ID::Game_Over);
+		font_color = RGB(255, 51, 0);
 		for (int i = 0; i < 4; i++)
 		{
 			fire[i].ToggleAnimation();
 		}
 		fire_animation_check = false;
-		decline_distance = 20;
 	}
 	if (fire[0].GetFrameIndexOfBitmap() == 37)
 	{
 		if (cube[0][0].GetTop() < 1080)
 		{
+			font_decline_distance += 30;
 			for (int i = 0; i < CANVAS_HEIGHT; i++)
 			{
 				for (int j = 0; j < CANVAS_WIDTH; j++)
 				{
-					cube[i][j].SetTopLeft(cube[i][j].GetLeft(), cube[i][j].GetTop() + 20);
+					cube[i][j].SetTopLeft(cube[i][j].GetLeft(), cube[i][j].GetTop() + 30);
 				}
 			}
 			for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
 			{
 				for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
 				{
-					cube_next[i][j].SetTopLeft(cube_next[i][j].GetLeft(), cube_next[i][j].GetTop() + 20);
+					cube_next[i][j].SetTopLeft(cube_next[i][j].GetLeft(), cube_next[i][j].GetTop() + 30);
 				}
 			}
 			for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
 			{
 				for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 				{
-					cube_hold[i][j].SetTopLeft(cube_hold[i][j].GetLeft(), cube_hold[i][j].GetTop() + 20);
+					cube_hold[i][j].SetTopLeft(cube_hold[i][j].GetLeft(), cube_hold[i][j].GetTop() + 30);
 				}
 			}
-			cube_place.SetTopLeft(cube_place.GetLeft(), cube_place.GetTop() + 20);
+			for (unsigned i = 0; i < lines_graph_body.size(); i++)
+			{
+				lines_graph_body[i].SetTopLeft(lines_graph_body[i].GetLeft(), lines_graph_body[i].GetTop() + 30);
+			}
+			cube_place.SetTopLeft(cube_place.GetLeft(), cube_place.GetTop() + 30);
 		}
 		else
 		{
@@ -470,6 +459,8 @@ void CGameStateRun::game_init()
 	level_up_animation_check = true;
 	finish_animation_check = true;
 	decline_distance = 0;
+	font_color = RGB(255, 255, 255);
+	font_decline_distance = 0;
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place.SetFrameIndexOfBitmap(0);
@@ -498,6 +489,10 @@ void CGameStateRun::game_init()
 		{
 			cube_hold[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
 		}
+	}
+	for (unsigned i = 0; i < lines_graph_body.size(); i++)
+	{
+		lines_graph_body[i].SetTopLeft(1114, 847 - i * 16);
 	}
 	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
 	{
@@ -1139,11 +1134,9 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
 	{
 		lines_graph_body[i].LoadBitmapByString({ "resources/lines_graph_body.bmp" });
-		lines_graph_body[i].SetTopLeft(1114, 847-i*16);
 	}
 
 	lines_graph_top.LoadBitmapByString({ "resources/lines_graph_top.bmp" });
-	lines_graph_top.SetTopLeft(1114, 223);
 
 	for (int i = 0; i < CANVAS_HEIGHT; i++)
 	{
@@ -1452,9 +1445,9 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		{
 			if (click_check(nFlags, point, again[0]))
 			{
+				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(audio_id);
 				audio_id = rand() % 6;
-				music->Play(AUDIO_ID::Click_Menu);
 				music->Play(audio_id, true);
 				again[0].SetAnimation(60, true);
 				game_init();

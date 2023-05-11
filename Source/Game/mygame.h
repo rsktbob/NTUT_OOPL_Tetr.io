@@ -490,13 +490,11 @@ namespace game_framework {
 				for (unsigned column_index = 0; column_index < active_tromino->matrix[row_index].size(); column_index++)
 				{
 					int y = active_tromino->y + row_index;
-					if (y >= 0) 
-					{
-						if (active_tromino->matrix[row_index][column_index] == 1)
+					if (y >= 0 && active_tromino->matrix[row_index][column_index] == 1)
 						{
 							canvas[y][active_tromino->x + column_index] = Color::black;
 						}
-					}
+					
 				}
 			}
 		}
@@ -925,6 +923,8 @@ namespace game_framework {
 		bool game_success;
 		map<int, int> blitz_level_to_speed;
 		map<int, int> blitz_level_to_lines;
+		COLORREF font_color;
+		int font_decline_distance;
 
 		CMovingBitmap retry;
 		bool retry_selected;
