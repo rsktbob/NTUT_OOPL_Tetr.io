@@ -146,10 +146,13 @@ void CGameStateRun::display_lines(unsigned lines_total)
 
 void CGameStateRun::display_play_passed_time()
 {
-	game_current_time = clock() - tetris_game.init_time;
-	game_minutes = game_current_time / 60000;
-	game_seconds = (game_current_time / 1000) % 60;
-	game_milliseconds = game_current_time % 1000;
+	if (!game_success)
+	{
+		game_current_time = clock() - tetris_game.init_time;
+		game_minutes = game_current_time / 60000;
+		game_seconds = (game_current_time / 1000) % 60;
+		game_milliseconds = game_current_time % 1000;
+	}
 	sprintf(time_display_front, "%d:%02d", game_minutes, game_seconds);
 	sprintf(time_display_back, ".%03d", game_milliseconds);
 
@@ -167,10 +170,10 @@ void CGameStateRun::display_play_passed_time()
 
 void CGameStateRun::display_play_remaining_time()
 {
-	game_current_time = 120000 - (clock() - tetris_game.init_time) >= 0 ? 120000 - (clock() - tetris_game.init_time) : 0;
-	game_minutes = game_current_time / 60000;
-	game_seconds = (game_current_time / 1000) % 60;
-	game_milliseconds = game_current_time % 1000;
+	game_remaining_time = 120000 - (clock() - tetris_game.init_time) >= 0 ? 120000 - (clock() - tetris_game.init_time) : 0;
+	game_minutes = game_remaining_time / 60000;
+	game_seconds = (game_remaining_time / 1000) % 60;
+	game_milliseconds = game_remaining_time % 1000;
 	sprintf(time_display_front, "%d:%02d", game_minutes, game_seconds);
 	sprintf(time_display_back, ".%03d", game_milliseconds);
 
@@ -238,22 +241,18 @@ void CGameStateRun::display_on_button_level()
 
 void CGameStateRun::display_on_left_level()
 {
-	if (!game_over)
-	{
-		sprintf(level_display, "%d", tetris_game.level);
-		level_displacement = (to_string(tetris_game.level).size() - 1) * 20;
+	sprintf(level_display, "%d", tetris_game.level);
+	level_displacement = (to_string(tetris_game.level).size() - 1) * 20;
+	
+	CDC *pDC = CDDraw::GetBackCDC();
 
+	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
+	CTextDraw::Print(pDC, 707, 630 + font_decline_distance, "LEVEL");
 
-		CDC *pDC = CDDraw::GetBackCDC();
+	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 200);
+	CTextDraw::Print(pDC, 755 - level_displacement, 655 + font_decline_distance, level_display);
 
-		CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", RGB(255, 255, 255), 50);
-		CTextDraw::Print(pDC, 707, 630, "LEVEL");
-
-		CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", RGB(255, 255, 255), 200);
-		CTextDraw::Print(pDC, 755 - level_displacement, 655, level_display);
-
-		CDDraw::ReleaseBackCDC();
-	}
+	CDDraw::ReleaseBackCDC();
 }
 
 void CGameStateRun::display_lines_graph(unsigned lines_total)
@@ -465,6 +464,7 @@ void CGameStateRun::game_init()
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place.SetFrameIndexOfBitmap(0);
 	tetris_game = TetrisGame();
+	game_remaining_time = 120000;
 	game_current_time = clock();
 	tetris_game.init_time = clock();
 	game_next_decline_time = clock();
@@ -718,7 +718,7 @@ void CGameStateRun::game_model(GameType gametype)
 					tetris_game.level += 1;
 					game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
 				}
-				if (game_current_time == 0)
+				if (game_remaining_time == 0)
 				{
 					game_success = true;
 				}
@@ -793,7 +793,7 @@ void CGameStateRun::game_model(GameType gametype)
 				sub_phase = 3;
 				record_current_time = clock() + 2000;
 			}
-			if (tetris_game.lines > 19)
+			if (tetris_game.lines >= 20)
 			{
 				game_level_up_animation();
 			}
@@ -1464,6 +1464,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				start[id].SetAnimation(60, true);
 				game_mode.SetFrameIndexOfBitmap(0);
 				phase = 2;
+				sub_phase = 1;
 			}
 		}
 	}
@@ -1532,6 +1533,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				start[id].SetAnimation(60, true);
 				game_mode.SetFrameIndexOfBitmap(0);
 				phase = 2;
+				sub_phase = 1;
 			}
 		}
 	}

@@ -687,13 +687,7 @@ namespace game_framework {
 		void render_next_tromino_array_to_place_canvas()
 		{
 			// update place_cube_canvas
-			for (unsigned i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
-			{
-				for (unsigned j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
-				{
-					place_canvas[i][j] = Color::transparent;
-				}
-			}
+			place_canvas = vector<vector<Color>>(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH, Color::transparent));
 			for (unsigned i = 0; i < next_tromino_array.size(); i++)
 			{
 				unsigned next_tromino_height = next_tromino_array[i].height();
@@ -714,13 +708,7 @@ namespace game_framework {
 		{
 			if (hold_tromino.has_value())
 			{
-				for (unsigned i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
-				{
-					for (unsigned j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
-					{
-						hold_canvas[i][j] = Color::transparent;
-					}
-				}
+				hold_canvas = vector<vector<Color>>(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
 				int hold_tromino_horizontal_position = (HOLD_CUBE_CANVAS_WIDTH - hold_tromino->width()) / 2;
 				for (signed i = 0; i < hold_tromino->height(); i++)
 				{
@@ -930,7 +918,8 @@ namespace game_framework {
 		bool retry_selected;
 		CMovingBitmap back_to_tittle;
 		bool back_to_tittle_selected;
-
+		
+		unsigned game_remaining_time;
 		unsigned game_current_time;
 		unsigned game_minutes;
 		unsigned game_seconds;
