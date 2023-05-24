@@ -138,16 +138,6 @@ namespace game_framework {
 		right
 	};
 
-	struct GameState
-	{
-		int lines;
-		int score;
-		bool game_over;
-		Canvas canvas;
-		Canvas place_canvas;
-		Canvas hold_canvas;
-	};
-
 	enum class GameType
 	{
 		fourtyl,
@@ -158,6 +148,16 @@ namespace game_framework {
 	class Button : public CMovingBitmap
 	{
 	public:
+		bool _is_touched_first = true;
+		AUDIO_ID _touch_audio_effect;
+		AUDIO_ID _click_audio_effect;
+		AUDIO_ID _next_background_music;
+
+		Button(AUDIO_ID touch_audio_effect, AUDIO_ID click_audio_effect, AUDIO_ID next_background_music) : CMovingBitmap(), 
+			_touch_audio_effect(touch_audio_effect), 
+			_click_audio_effect(click_audio_effect), 
+			_next_background_music(next_background_music) {}
+
 		bool is_clicked(UINT nFlags, CPoint point, CMovingBitmap character)
 		{
 			if (is_touched(point, character) && nFlags == VK_LBUTTON)
@@ -166,16 +166,16 @@ namespace game_framework {
 			}
 			return false;
 		}
+
 		bool is_touched(CPoint point, CMovingBitmap character)
 		{
 			if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth() && point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight())
 			{
+				_is_touched_first = false;
 				return true;
 			}
+			_is_touched_first = true;
 			return false;
-		}
-		Button() : CMovingBitmap()
-		{
 		}
 	};
 
@@ -350,6 +350,8 @@ namespace game_framework {
 		int level = 1;
 		int init_time = 0;
 		int per_round_score = 0;
+		bool game_over = false;
+		bool game_success = false;
 		map<int, int> cleared_lines_to_get_score = { {1, 100}, {2, 300}, {3, 500}, {4, 800} };
 
 		optional<Tromino> active_tromino;
@@ -362,11 +364,12 @@ namespace game_framework {
 		Canvas hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
 		bool hold_once_per_round = true;
 
-		TetrisGame()
+		TetrisGame(unsigned int board_width, unsigned int board_height)
 		{
 			random_color_array = produce_seven_color_not_repeative();
 			active_tromino = Tromino::according_color_tromino(random_color_array.front());
 			predict_tromino_landing_position();
+			render_predict_tromino_to_canvas();
 			random_color_array.pop();
 			for (unsigned i = 0; i < 5; i++)
 			{
@@ -375,7 +378,7 @@ namespace game_framework {
 			}
 		}
 
-		GameState event_handler(Event event)
+		void event_handler(Event event)
 		{
 			// Generate a new tromino if active_tromino is null
 			if (!this->active_tromino.has_value())
@@ -404,19 +407,16 @@ namespace game_framework {
 			if (event == Event::left)
 			{
 				move_active_tromino_left();
-				remove_predict_tromino_from_canvas();
 				predict_tromino_landing_position();
 			}
 			else if (event == Event::right)
 			{
 				move_active_tromino_right();
-				remove_predict_tromino_from_canvas();
 				predict_tromino_landing_position();
 			}
 			else if (event == Event::rotate)
 			{
 				rotate_active_tromino();
-				remove_predict_tromino_from_canvas();
 				predict_tromino_landing_position();
 			}
 			else if (event == Event::down)
@@ -435,15 +435,11 @@ namespace game_framework {
 			else if (event == Event::hold)
 			{
 				hold_active_tromino();
-				remove_predict_tromino_from_canvas();
 				predict_tromino_landing_position();
 			}
 
 			// Render active_tromino before proceeding as it may be reset later on
 
-			bool game_over = false;
-
-			render_predict_tromino_to_canvas();
 			render_active_tromino_to_canvas();
 			render_next_tromino_array_to_place_canvas();
 			render_hold_tromino_to_hold_canvas();
@@ -457,12 +453,11 @@ namespace game_framework {
 				active_tromino.reset();
 
 				predict_tromino.reset();
+				render_predict_tromino_to_canvas();
 
 				// Only check for game over if active_tromino reached bottom
 				game_over = is_game_over();
 			}
-
-			return { lines, score, game_over, canvas, place_canvas, hold_canvas };
 		}
 
 		void remove_predict_tromino_from_canvas()
@@ -722,6 +717,7 @@ namespace game_framework {
 
 		void predict_tromino_landing_position()
 		{
+			remove_predict_tromino_from_canvas();
 			predict_tromino.reset();
 			predict_tromino.emplace(active_tromino.value());
 			predict_tromino->color = Color::translucent;
@@ -729,6 +725,7 @@ namespace game_framework {
 			{
 				predict_tromino->y += 1;
 			}
+			render_predict_tromino_to_canvas();
 		}
 
 		// Remove filled rows, prepend empty rows, and update scores in the process
@@ -827,7 +824,9 @@ namespace game_framework {
 		void display_play_total_time();
 		void display_play_real_time(COLORREF color);
 		void display_play_total_score();
-		void game_init();
+		void display_board();
+		void display_finish();
+		void game_init(unsigned int board_width, unsigned int board_height);
 		void game_update(Event event);
 		void game_natural_decline();
 		void game_control();
@@ -878,19 +877,26 @@ namespace game_framework {
 		vector<CMovingBitmap> blitz_menu_check = vector<CMovingBitmap>(4);
 		vector<CMovingBitmap> blitz_end_menu = vector<CMovingBitmap>(3);
 
-		vector<CMovingBitmap> again = vector<CMovingBitmap>(2);
-
 		vector<CMovingBitmap> zen_menu = vector<CMovingBitmap>(2);
 		CMovingBitmap zen_model;
 
-		vector<CMovingBitmap> start = vector<CMovingBitmap>(4);
+		vector<CMovingBitmap> custom_menu = vector<CMovingBitmap>(2);
+		CMovingBitmap custom_control_menu;
+		vector<CMovingBitmap> board_width_control = vector<CMovingBitmap>(2);
+		vector<bool> board_width_control_selected = { false, false };
+		unsigned int  board_width;
+		vector<CMovingBitmap> board_height_control = vector<CMovingBitmap>(2);
+		vector<bool> board_height_control_selected = { false, false };
+		unsigned int board_height;
 
+		vector<CMovingBitmap> again = vector<CMovingBitmap>(2);
+		vector<CMovingBitmap> start = vector<CMovingBitmap>(4);
 		vector<CMovingBitmap> fire = vector<CMovingBitmap>(4);
 		CMovingBitmap level_up_scene;
 		CMovingBitmap exit_scene;
 
-		TetrisGame tetris_game;
-		TetrisGame save_tetris_game;
+		TetrisGame tetris_game = TetrisGame(10, 20);
+		TetrisGame save_tetris_game = TetrisGame(10, 20);
 		vector<vector<CMovingBitmap>> cube = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
@@ -907,8 +913,6 @@ namespace game_framework {
 		bool right_key_down;
 		bool down_key_down;
 		bool exit_check;
-		bool game_over;
-		bool game_success;
 		map<int, int> blitz_level_to_speed;
 		map<int, int> blitz_level_to_lines;
 		COLORREF font_color;
