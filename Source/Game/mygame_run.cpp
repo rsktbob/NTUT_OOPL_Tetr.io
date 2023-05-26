@@ -95,23 +95,21 @@ CMovingBitmap CGameStateRun::Cube()
 	return cube;
 }
 
-void CGameStateRun::display_game()
+void CGameStateRun::display_cubes()
 {
-	cube_place.ShowBitmap();
-
-	for (int i = 0; i < CANVAS_HEIGHT; i++)
+	for (int i = 0; i < (int)cubes.size(); i++)
 	{
-		for (int j = 0; j < CANVAS_WIDTH; j++)
+		for (int j = 0; j < (int)cubes[0].size(); j++)
 		{
-			cube[i][j].ShowBitmap();
+			cubes[i][j].ShowBitmap();
 		}
 	}
 
-	for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
+	for (int i = 0; i < NEXT_CUBE_CANVAS_HEIGHT; i++)
 	{
-		for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
+		for (int j = 0; j < NEXT_CUBE_CANVAS_WIDTH; j++)
 		{
-			cube_next[i][j].ShowBitmap();
+			next_cubes[i][j].ShowBitmap();
 		}
 	}
 
@@ -119,9 +117,25 @@ void CGameStateRun::display_game()
 	{
 		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 		{
-			cube_hold[i][j].ShowBitmap();
+			hold_cubes[i][j].ShowBitmap();
 		}
 	}
+}
+
+void CGameStateRun::display_game()
+{
+	cube_place_border.ShowBitmap();
+	display_cubes();
+}
+
+void CGameStateRun::display_custom_game()
+{
+	cube_next_border.ShowBitmap();
+	cube_hold_border.ShowBitmap();
+	for_each(left_cube_border.begin(), left_cube_border.end(), [](CMovingBitmap &cube) { cube.ShowBitmap(); });
+	for_each(right_cube_border.begin(), right_cube_border.end(), [](CMovingBitmap &cube) { cube.ShowBitmap(); });
+	for_each(bottom_cube_border.begin(), bottom_cube_border.end(), [](CMovingBitmap &cube) { cube.ShowBitmap(); });
+	display_cubes();
 }
 
 void CGameStateRun::display_lines(unsigned lines_total)
@@ -319,7 +333,7 @@ void  CGameStateRun::display_reciprocal_animation()
 	}
 }
 
-void CGameStateRun::display_board()
+void CGameStateRun::display_custom_control_menu()
 {
 	CDC *pDC = CDDraw::GetBackCDC();
 
@@ -350,7 +364,7 @@ void CGameStateRun::display_finish()
 
 bool CGameStateRun::game_over_animation()
 {
-	cube_place.SetFrameIndexOfBitmap(1);
+	cube_place_border.SetFrameIndexOfBitmap(1);
 	if (fire_animation_check)
 	{
 		music->Play(AUDIO_ID::Game_Over);
@@ -363,35 +377,35 @@ bool CGameStateRun::game_over_animation()
 	}
 	if (fire[0].GetFrameIndexOfBitmap() == 37)
 	{
-		if (cube[0][0].GetTop() < 1080)
+		if (cubes[0][0].GetTop() < 1080)
 		{
 			font_decline_distance += 30;
 			for (int i = 0; i < CANVAS_HEIGHT; i++)
 			{
 				for (int j = 0; j < CANVAS_WIDTH; j++)
 				{
-					cube[i][j].SetTopLeft(cube[i][j].GetLeft(), cube[i][j].GetTop() + 30);
+					cubes[i][j].SetTopLeft(cubes[i][j].GetLeft(), cubes[i][j].GetTop() + 30);
 				}
 			}
-			for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
+			for (int i = 0; i < NEXT_CUBE_CANVAS_HEIGHT; i++)
 			{
-				for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
+				for (int j = 0; j < NEXT_CUBE_CANVAS_WIDTH; j++)
 				{
-					cube_next[i][j].SetTopLeft(cube_next[i][j].GetLeft(), cube_next[i][j].GetTop() + 30);
+					next_cubes[i][j].SetTopLeft(next_cubes[i][j].GetLeft(), next_cubes[i][j].GetTop() + 30);
 				}
 			}
 			for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
 			{
 				for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 				{
-					cube_hold[i][j].SetTopLeft(cube_hold[i][j].GetLeft(), cube_hold[i][j].GetTop() + 30);
+					hold_cubes[i][j].SetTopLeft(hold_cubes[i][j].GetLeft(), hold_cubes[i][j].GetTop() + 30);
 				}
 			}
 			for (unsigned i = 0; i < lines_graph_body.size(); i++)
 			{
 				lines_graph_body[i].SetTopLeft(lines_graph_body[i].GetLeft(), lines_graph_body[i].GetTop() + 30);
 			}
-			cube_place.SetTopLeft(cube_place.GetLeft(), cube_place.GetTop() + 30);
+			cube_place_border.SetTopLeft(cube_place_border.GetLeft(), cube_place_border.GetTop() + 30);
 		}
 		else
 		{
@@ -405,7 +419,7 @@ bool CGameStateRun::game_success_animation()
 {
 	static int record_current_time = 0;
 	if (finish_animation_check) {
-		music->Stop(audio_id);
+		music->Stop(current_audio);
 		music->Play(AUDIO_ID::Game_Finish);
 		game_record_current_time();
 		record_current_time = clock();
@@ -456,7 +470,7 @@ void CGameStateRun::game_exit_animation()
 		{
 			tittle.SetFrameIndexOfBitmap(1);
 			game_mode.SetFrameIndexOfBitmap(0);
-			music->Stop(audio_id);
+			music->Stop(current_audio);
 			music->Play(AUDIO_ID::Arial_City, true);
 			phase = 2;
 		}
@@ -488,33 +502,33 @@ void CGameStateRun::game_init()
 	font_decline_distance = 0;
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
-	cube_place.SetFrameIndexOfBitmap(0);
+	cube_place_border.SetFrameIndexOfBitmap(0);
 	tetris_game = TetrisGame(20, 10);
 	game_remaining_time = 120000;
 	game_current_time = clock();
 	tetris_game.init_time = clock();
 	game_next_decline_time = clock();
 	game_next_move_time = clock();
-	cube = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH, Cube()));
+	cubes = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH, Cube()));
 	for (int i = 0; i < 22; i++)
 	{
 		for (int j = 0; j < 10; j++)
 		{
-			cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
+			cubes[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
 		}
 	}
 	for (int i = 0; i < 14; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
+			next_cubes[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
 		}
 	}
 	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
 	{
 		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 		{
-			cube_hold[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
+			hold_cubes[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
 		}
 	}
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
@@ -525,7 +539,7 @@ void CGameStateRun::game_init()
 	{
 		fire.SetFrameIndexOfBitmap(0);
 	});
-	cube_place.SetTopLeft(618, 224);
+	cube_place_border.SetTopLeft(618, 224);
 }
 
 void CGameStateRun::game_custom_init(int board_height, int board_width)
@@ -542,41 +556,50 @@ void CGameStateRun::game_custom_init(int board_height, int board_width)
 	font_decline_distance = 0;
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
-	cube_place.SetFrameIndexOfBitmap(0);
+	cube_place_border.SetFrameIndexOfBitmap(0);
 	tetris_game = TetrisGame(board_height, board_width);
 	game_remaining_time = 120000;
 	game_current_time = clock();
 	tetris_game.init_time = clock();
 	game_next_decline_time = clock();
 	game_next_move_time = clock();
-	cube = vector<vector<CMovingBitmap>>(board_height+2, vector<CMovingBitmap>(board_width, Cube()));
-	int cube_left = (10 - board_width) * 16 + 788;
-	int cube_top = (20 - board_height) * 16 + 160;
-	int cube_next_left = (board_width - 10) * 16 + 1154;
-	int cube_next_top = (20 - board_height) * 16 + 270;
-	int cube_hold_left = (10 - board_width) * 16 + 638;
-	int cube_hold_top = (20 - board_height) * 16 + 267;
+	cubes = vector<vector<CMovingBitmap>>(board_height+2, vector<CMovingBitmap>(board_width, Cube()));
+	int cubes_left = (10 - board_width) * 16 + 788;
+	int cubes_top = (20 - board_height) * 16 + 160;
+	int next_cubes_left = (board_width - 10) * 16 + 1154;
+	int next_cubes_top = (20 - board_height) * 16 + 270;
+	int hold_cubes_left = (10 - board_width) * 16 + 638;
+	int hold_cubes_top = (20 - board_height) * 16 + 267;
 	int lines_graph_left = (board_height - 20);
-	for (int i = 0; i < (int)cube.size(); i++)
+	for (int i = 0; i < (int)cubes.size(); i++)
 	{
-		for (int j = 0; j < (int)cube[0].size(); j++)
+		for (int j = 0; j < (int)cubes[0].size(); j++)
 		{
-			cube[i][j].SetTopLeft(cube_left + j * 32, cube_top + i * 32);
+			cubes[i][j].SetTopLeft(cubes_left + j * 32, cubes_top + i * 32);
 		}
 	}
 	for (int i = 0; i < 14; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			cube_next[i][j].SetTopLeft(cube_next_left + j * 32, cube_next_top + i * 32);
+			next_cubes[i][j].SetTopLeft(next_cubes_left + j * 32, next_cubes_top + i * 32);
 		}
 	}
 	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
 	{
 		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 		{
-			cube_hold[i][j].SetTopLeft(cube_hold_left + j * 32, cube_hold_top + i * 32);
+			hold_cubes[i][j].SetTopLeft(hold_cubes_left + j * 32, hold_cubes_top + i * 32);
 		}
+	}
+	for (int i = 0; i < (int)cubes.size(); i++)
+	{
+		left_cube_border[i].SetTopLeft(cubes_left-3, cubes_top + i * 32);
+		right_cube_border[i].SetTopLeft(cubes_left + board_width * 32, cubes_top + i * 32);
+	}
+	for (int i = 0; i < (int)cubes[0].size(); i++)
+	{
+		bottom_cube_border[i].SetTopLeft(cubes_left+i*32, cubes_top + board_height * 32);
 	}
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
 	{
@@ -598,21 +621,21 @@ void CGameStateRun::game_update(Event event)
 		{
 			if (i < PREVIEW_ROW_COUNT && canvas[i][j] == Color::black)
 			{
-				cube[i][j].SetFrameIndexOfBitmap(Color::transparent);
+				cubes[i][j].SetFrameIndexOfBitmap(Color::transparent);
 			}
 			else
 			{
-				cube[i][j].SetFrameIndexOfBitmap(canvas[i][j]);
+				cubes[i][j].SetFrameIndexOfBitmap(canvas[i][j]);
 			}
 		}
 	}
 
-	Canvas place_canvas =  tetris_game.place_canvas;
-	for (int i = 0; i < PLACE_CUBE_CANVAS_HEIGHT; i++)
+	Canvas place_canvas =  tetris_game.next_canvas;
+	for (int i = 0; i < NEXT_CUBE_CANVAS_HEIGHT; i++)
 	{
-		for (int j = 0; j < PLACE_CUBE_CANVAS_WIDTH; j++)
+		for (int j = 0; j < NEXT_CUBE_CANVAS_WIDTH; j++)
 		{
-			cube_next[i][j].SetFrameIndexOfBitmap(place_canvas[i][j]);
+			next_cubes[i][j].SetFrameIndexOfBitmap(place_canvas[i][j]);
 		}
 	}
 
@@ -621,7 +644,7 @@ void CGameStateRun::game_update(Event event)
 	{
 		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 		{
-			cube_hold[i][j].SetFrameIndexOfBitmap(hold_canvas[i][j]);
+			hold_cubes[i][j].SetFrameIndexOfBitmap(hold_canvas[i][j]);
 		}
 	}
 }
@@ -727,7 +750,7 @@ void CGameStateRun::game_model(GameType gametype)
 			{
 				if (!game_over_animation())
 				{
-					music->Stop(audio_id);
+					music->Stop(current_audio);
 					music->Play(AUDIO_ID::Game_Over_Menu);
 					sub_phase = 3;
 				}
@@ -735,8 +758,8 @@ void CGameStateRun::game_model(GameType gametype)
 			else {
 				if (!game_success_animation())
 				{
-					audio_id = AUDIO_ID::Success_Story_Akiko_Shioyama;
-					music->Play(audio_id, true);
+					current_audio = AUDIO_ID::Success_Story_Akiko_Shioyama;
+					music->Play(current_audio, true);
 					tittle.SetFrameIndexOfBitmap(6);
 					again[0].SetAnimation(60, false);
 					sub_phase = 4;
@@ -765,7 +788,7 @@ void CGameStateRun::game_model(GameType gametype)
 			}
 		}
 	}
-	if (gametype == GameType::blitz)
+	else if (gametype == GameType::blitz)
 	{
 		if (sub_phase == 1)
 		{
@@ -813,7 +836,7 @@ void CGameStateRun::game_model(GameType gametype)
 			{
 				if (!game_over_animation())
 				{
-					music->Stop(audio_id);
+					music->Stop(current_audio);
 					music->Play(AUDIO_ID::Game_Over_Menu);
 					sub_phase = 3;
 				}
@@ -821,8 +844,8 @@ void CGameStateRun::game_model(GameType gametype)
 			else {
 				if (!game_success_animation())
 				{
-					audio_id = AUDIO_ID::Philosophy;
-					music->Play(audio_id, true);
+					current_audio = AUDIO_ID::Philosophy;
+					music->Play(current_audio, true);
 					game_record_current_time();
 					game_record_current_score();
 					tittle.SetFrameIndexOfBitmap(7);
@@ -894,6 +917,86 @@ void CGameStateRun::game_model(GameType gametype)
 			}
 		}
 	}
+	else if (gametype == GameType::custom)
+	{
+		if (sub_phase == 1)
+		{
+			if (touch_option_menu_selected)
+			{
+				if (touch_option_menu_first)
+				{
+					music->Play(AUDIO_ID::Touch_Check_Menu);
+					touch_option_menu_first = false;
+				}
+			}
+			else
+			{
+				touch_option_menu_first = true;
+			}
+		}
+		else if (sub_phase == 2)
+		{
+			if (!tetris_game.game_over && !tetris_game.game_success)
+			{
+				if (game_next_decline_time <= clock())
+				{
+					game_natural_decline();
+				}
+				if (game_next_move_time <= clock())
+				{
+					game_control();
+				}
+				if (tetris_game.lines >= 40)
+				{
+					tetris_game.game_success = true;
+				}
+				if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
+				{
+					game_exit_animation();
+				}
+			}
+			else if (tetris_game.game_over)
+			{
+				if (!game_over_animation())
+				{
+					music->Stop(current_audio);
+					music->Play(AUDIO_ID::Game_Over_Menu);
+					sub_phase = 3;
+				}
+			}
+			else {
+				if (!game_success_animation())
+				{
+					current_audio = AUDIO_ID::Success_Story_Akiko_Shioyama;
+					music->Play(current_audio, true);
+					tittle.SetFrameIndexOfBitmap(6);
+					again[0].SetAnimation(60, false);
+					sub_phase = 4;
+				}
+			}
+		}
+		else if (sub_phase == 3)
+		{
+			fail_game_menu_move();
+		}
+		else if (sub_phase == 4)
+		{
+			if (back.GetLeft() < 0 && back_selected)
+			{
+				if (touch_menu_check_first)
+				{
+					music->Play(AUDIO_ID::Touch_Menu);
+					touch_menu_check_first = false;
+				}
+				back.SetTopLeft(back.GetLeft() + 10, 80);
+			}
+			else if (back.GetLeft() > -40 && !back_selected)
+			{
+				touch_menu_check_first = true;
+				back.SetTopLeft(back.GetLeft() - 10, 80);
+			}
+		}
+	}
 }
 
 void CGameStateRun::fail_game_menu_move()
@@ -943,8 +1046,8 @@ void CGameStateRun::fail_game_menu_click(UINT nFlags, CPoint point, GameType gam
 	{
 		music->Play(AUDIO_ID::Back_Menu);
 		music->Stop(AUDIO_ID::Arial_City);
-		audio_id = gametype == GameType::blitz ? AUDIO_ID::Hyper_Velocity : rand() % 6;
-		music->Play(audio_id, gametype == GameType::blitz ? false : true);
+		current_audio = gametype == GameType::blitz ? AUDIO_ID::Hyper_Velocity : rand() % 6;
+		music->Play(current_audio, gametype == GameType::blitz ? false : true);
 		game_init();
 		retry.SetTopLeft(1921, 80);
 		back_to_tittle.SetTopLeft(1921, 200);
@@ -1243,8 +1346,8 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/custom_start_4.bmp", "resources/custom_start_3.bmp", "resources/custom_start_2.bmp" });
 	start[3].SetTopLeft(1394, 237);
 	
-	cube_place.LoadBitmapByString({ "resources/cube_place.bmp", "resources/cube_place_game_over.bmp" }, RGB(0, 0, 255));
-	cube_place.SetTopLeft(618, 224);
+	cube_place_border.LoadBitmapByString({ "resources/cube_place_border.bmp", "resources/cube_place_border_game_over.bmp" }, RGB(0, 0, 255));
+	cube_place_border.SetTopLeft(618, 224);
 
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
 	{
@@ -1253,8 +1356,8 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	lines_graph_top.LoadBitmapByString({ "resources/lines_graph_top.bmp" });
 	
-	cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH, Cube()));
-	cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH, Cube()));
+	next_cubes = vector<vector<CMovingBitmap>>(NEXT_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(NEXT_CUBE_CANVAS_WIDTH, Cube()));
+	hold_cubes = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH, Cube()));
 
 	fire[0].LoadBitmapByString({ "resources/fire_1_lt.bmp", "resources/fire_2_lt.bmp", "resources/fire_3_lt.bmp", "resources/fire_4_lt.bmp", "resources/fire_5_lt.bmp",
 		"resources/fire_6_lt.bmp", "resources/fire_7_lt.bmp", "resources/fire_8_lt.bmp", "resources/fire_9_lt.bmp", "resources/fire_10_lt.bmp", "resources/fire_11_lt.bmp",
@@ -1507,10 +1610,10 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[0]))
 			{
-				audio_id = rand() % 6;
+				current_audio = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(audio_id, true);
+				music->Play(current_audio, true);
 				game_init();
 				sub_phase = 2;
 			}
@@ -1539,16 +1642,16 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			if (click_check(nFlags, point, again[0]))
 			{
 				music->Play(AUDIO_ID::Click_Menu);
-				music->Stop(audio_id);
-				audio_id = rand() % 6;
-				music->Play(audio_id, true);
+				music->Stop(current_audio);
+				current_audio = rand() % 6;
+				music->Play(current_audio, true);
 				again[0].SetAnimation(60, true);
 				game_init();
 				sub_phase = 2;
 			}
 			if (click_check(nFlags, point, back))
 			{
-				music->Stop(audio_id);
+				music->Stop(current_audio);
 				music->Play(AUDIO_ID::Back_Menu);
 				music->Play(AUDIO_ID::Arial_City, true);
 				again[0].SetAnimation(60, true);
@@ -1576,10 +1679,10 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[1]))
 			{
-				audio_id = AUDIO_ID::Hyper_Velocity;
+				current_audio = AUDIO_ID::Hyper_Velocity;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(audio_id);
+				music->Play(current_audio);
 				game_init();
 				sub_phase = 2;
 			}
@@ -1608,16 +1711,16 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			if (click_check(nFlags, point, again[1]))
 			{
 				music->Play(AUDIO_ID::Click_Menu);
-				music->Stop(audio_id);
-				audio_id = AUDIO_ID::Hyper_Velocity;
-				music->Play(audio_id);
+				music->Stop(current_audio);
+				current_audio = AUDIO_ID::Hyper_Velocity;
+				music->Play(current_audio);
 				again[1].SetAnimation(60, true);
 				game_init();
 				sub_phase = 2;
 			}
 			if (click_check(nFlags, point, back))
 			{
-				music->Stop(audio_id);
+				music->Stop(current_audio);
 				music->Play(AUDIO_ID::Back_Menu);
 				music->Play(AUDIO_ID::Arial_City, true);
 				again[1].SetAnimation(60, true);
@@ -1646,10 +1749,10 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[2]))
 			{
-				audio_id = rand() % 6;
+				current_audio = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(audio_id, true);
+				music->Play(current_audio, true);
 				background.SetFrameIndexOfBitmap(rand() % 6);
 				game_next_decline_time = clock();
 				game_next_move_time = clock();
@@ -1688,10 +1791,10 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		}
 		if (click_check(nFlags, point, start[3]))
 		{
-			audio_id = rand() % 6;
+			current_audio = rand() % 6;
 			music->Play(AUDIO_ID::Click_Menu);
 			music->Stop(AUDIO_ID::Arial_City);
-			music->Play(audio_id, true);
+			music->Play(current_audio, true);
 			game_init();
 			sub_phase = 2;
 		}
@@ -2007,9 +2110,13 @@ void CGameStateRun::OnShow()
 
 
 			custom_control_menu.ShowBitmap();
-			display_board();
+			display_custom_control_menu();
 
 			start[3].ShowBitmap();
+		}
+		else if (sub_phase == 2)
+		{
+			
 		}
 	}
 }

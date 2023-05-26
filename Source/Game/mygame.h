@@ -18,8 +18,8 @@ const int CANVAS_WIDTH = 10;
 const int CANVAS_HEIGHT = 22;
 const int PREVIEW_ROW_COUNT = 2;
 
-const int PLACE_CUBE_CANVAS_WIDTH = 4;
-const int PLACE_CUBE_CANVAS_HEIGHT = 14;
+const int NEXT_CUBE_CANVAS_WIDTH = 4;
+const int NEXT_CUBE_CANVAS_HEIGHT = 14;
 
 const int HOLD_CUBE_CANVAS_WIDTH = 4;
 const int HOLD_CUBE_CANVAS_HEIGHT = 2;
@@ -142,7 +142,8 @@ namespace game_framework {
 	{
 		fourtyl,
 		blitz,
-		zen
+		zen,
+		custom
 	};
 
 	class Button : public CMovingBitmap
@@ -360,13 +361,13 @@ namespace game_framework {
 		optional<Tromino> hold_tromino;
 		queue<Color> random_color_array;
 		Canvas canvas;
-		Canvas place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
+		Canvas next_canvas = Canvas(NEXT_CUBE_CANVAS_HEIGHT, vector<Color>(NEXT_CUBE_CANVAS_WIDTH));
 		Canvas hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
 		bool hold_once_per_round = true;
 
-		TetrisGame(int board_height, int board_width)
+		TetrisGame(int height, int width)
 		{
-			canvas = Canvas(board_height + 2, vector<Color>(board_width));
+			canvas = Canvas(height + 2, vector<Color>(width));
 			random_color_array = produce_seven_color_not_repeative();
 			active_tromino = Tromino::according_color_tromino(random_color_array.front());
 			predict_tromino_landing_position();
@@ -683,18 +684,18 @@ namespace game_framework {
 		void render_next_tromino_array_to_place_canvas()
 		{
 			// update place_cube_canvas
-			place_canvas = vector<vector<Color>>(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH, Color::transparent));
+			next_canvas = vector<vector<Color>>(NEXT_CUBE_CANVAS_HEIGHT, vector<Color>(NEXT_CUBE_CANVAS_WIDTH, Color::transparent));
 			for (unsigned i = 0; i < next_tromino_array.size(); i++)
 			{
 				unsigned next_tromino_height = next_tromino_array[i].height();
 				unsigned next_tromino_width = next_tromino_array[i].width();
-				int next_tromino_horizontal_position = (PLACE_CUBE_CANVAS_WIDTH - next_tromino_array[i].width()) / 2;
+				int next_tromino_horizontal_position = (NEXT_CUBE_CANVAS_WIDTH - next_tromino_array[i].width()) / 2;
 				Color next_tromino_color = next_tromino_array[i].color;
 				for (unsigned j = 0; j < next_tromino_height; j++)
 				{
 					for (unsigned k = 0; k < next_tromino_width; k++)
 					{
-						this->place_canvas[i * 3 + j][k + next_tromino_horizontal_position] = next_tromino_array[i].matrix[j][k] == 1 ? next_tromino_color : Color::transparent;
+						this->next_canvas[i * 3 + j][k + next_tromino_horizontal_position] = next_tromino_array[i].matrix[j][k] == 1 ? next_tromino_color : Color::transparent;
 					}
 				}
 			}
@@ -749,7 +750,7 @@ namespace game_framework {
 		void clear_all_canvas()
 		{
 			canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
-			place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
+			next_canvas = Canvas(NEXT_CUBE_CANVAS_HEIGHT, vector<Color>(NEXT_CUBE_CANVAS_WIDTH));
 			hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
 		}
 
@@ -812,7 +813,9 @@ namespace game_framework {
 		bool game_success_animation();
 		void game_level_up_animation();
 		void game_exit_animation();
+		void display_cubes();
 		void display_game();
+		void display_custom_game();
 		void display_lines(unsigned lines_total);
 		void display_play_passed_time();
 		void display_play_remaining_time();
@@ -825,7 +828,7 @@ namespace game_framework {
 		void display_play_total_time();
 		void display_play_real_time(COLORREF color);
 		void display_play_total_score();
-		void display_board();
+		void display_custom_control_menu();
 		void display_finish();
 		void game_init();
 		void game_custom_init(int board_height, int board_width);
@@ -899,13 +902,18 @@ namespace game_framework {
 
 		TetrisGame tetris_game = TetrisGame(20, 10);
 		TetrisGame save_tetris_game = TetrisGame(20, 10);
-		vector<vector<CMovingBitmap>> cube = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH));
-		vector<vector<CMovingBitmap>> cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH));
-		vector<vector<CMovingBitmap>> cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
-		CMovingBitmap cube_place;
+		vector<vector<CMovingBitmap>> cubes = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH));
+		vector<vector<CMovingBitmap>> next_cubes = vector<vector<CMovingBitmap>>(NEXT_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(NEXT_CUBE_CANVAS_WIDTH));
+		vector<vector<CMovingBitmap>> hold_cubes = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
+		CMovingBitmap cube_place_border;
+		CMovingBitmap cube_next_border;
+		CMovingBitmap cube_hold_border;
+		vector<CMovingBitmap> left_cube_border;
+		vector<CMovingBitmap> right_cube_border;
+		vector<CMovingBitmap> bottom_cube_border;
 		vector<CMovingBitmap> lines_graph_body = vector<CMovingBitmap>(40);
 		CMovingBitmap lines_graph_top;
-		int audio_id;
+		int current_audio;
 		int record_current_time;
 		int game_next_decline_time;
 		int game_decline_time_interval;
