@@ -474,7 +474,7 @@ void CGameStateRun::game_exit_animation()
 	}
 }
 
-void CGameStateRun::game_init(unsigned int board_width, unsigned int board_height)
+void CGameStateRun::game_init()
 {
 	left_key_down = false;
 	right_key_down = false;
@@ -489,45 +489,103 @@ void CGameStateRun::game_init(unsigned int board_width, unsigned int board_heigh
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place.SetFrameIndexOfBitmap(0);
-	tetris_game = TetrisGame(board_width, board_height);
+	tetris_game = TetrisGame(20, 10);
 	game_remaining_time = 120000;
 	game_current_time = clock();
 	tetris_game.init_time = clock();
 	game_next_decline_time = clock();
 	game_next_move_time = clock();
-	if (board_width == 10 && board_height == 20)
+	cube = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH, Cube()));
+	for (int i = 0; i < 22; i++)
 	{
-		for (int i = 0; i < 22; i++)
+		for (int j = 0; j < 10; j++)
 		{
-			for (int j = 0; j < 10; j++)
-			{
-				cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
-			}
+			cube[i][j].SetTopLeft(788 + j * 32, 160 + i * 32);
 		}
-		for (int i = 0; i < 14; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{
-				cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
-			}
-		}
-		for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
-		{
-			for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
-			{
-				cube_hold[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
-			}
-		}
-		for (unsigned i = 0; i < lines_graph_body.size(); i++)
-		{
-			lines_graph_body[i].SetTopLeft(1114, 847 - i * 16);
-		}
-		for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
-		{
-			fire.SetFrameIndexOfBitmap(0);
-		});
-		cube_place.SetTopLeft(618, 224);
 	}
+	for (int i = 0; i < 14; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			cube_next[i][j].SetTopLeft(1154 + j * 32, 270 + i * 32);
+		}
+	}
+	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
+		{
+			cube_hold[i][j].SetTopLeft(638 + j * 32, 267 + i * 32);
+		}
+	}
+	for (unsigned i = 0; i < lines_graph_body.size(); i++)
+	{
+		lines_graph_body[i].SetTopLeft(1114, 847 - i * 16);
+	}
+	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
+	{
+		fire.SetFrameIndexOfBitmap(0);
+	});
+	cube_place.SetTopLeft(618, 224);
+}
+
+void CGameStateRun::game_custom_init(int board_height, int board_width)
+{
+	left_key_down = false;
+	right_key_down = false;
+	down_key_down = false;
+	exit_check = false;
+	fire_animation_check = true;
+	level_up_animation_check = true;
+	finish_animation_check = true;
+	decline_distance = 0;
+	font_color = RGB(255, 255, 255);
+	font_decline_distance = 0;
+	game_decline_time_interval = 1000;
+	background.SetFrameIndexOfBitmap(rand() % 6);
+	cube_place.SetFrameIndexOfBitmap(0);
+	tetris_game = TetrisGame(board_height, board_width);
+	game_remaining_time = 120000;
+	game_current_time = clock();
+	tetris_game.init_time = clock();
+	game_next_decline_time = clock();
+	game_next_move_time = clock();
+	cube = vector<vector<CMovingBitmap>>(board_height+2, vector<CMovingBitmap>(board_width, Cube()));
+	int cube_left = (10 - board_width) * 16 + 788;
+	int cube_top = (20 - board_height) * 16 + 160;
+	int cube_next_left = (board_width - 10) * 16 + 1154;
+	int cube_next_top = (20 - board_height) * 16 + 270;
+	int cube_hold_left = (10 - board_width) * 16 + 638;
+	int cube_hold_top = (20 - board_height) * 16 + 267;
+	int lines_graph_left = (board_height - 20);
+	for (int i = 0; i < (int)cube.size(); i++)
+	{
+		for (int j = 0; j < (int)cube[0].size(); j++)
+		{
+			cube[i][j].SetTopLeft(cube_left + j * 32, cube_top + i * 32);
+		}
+	}
+	for (int i = 0; i < 14; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			cube_next[i][j].SetTopLeft(cube_next_left + j * 32, cube_next_top + i * 32);
+		}
+	}
+	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
+	{
+		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
+		{
+			cube_hold[i][j].SetTopLeft(cube_hold_left + j * 32, cube_hold_top + i * 32);
+		}
+	}
+	for (unsigned i = 0; i < lines_graph_body.size(); i++)
+	{
+		lines_graph_body[i].SetTopLeft(1114, 847 - i * 16);
+	}
+	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
+	{
+		fire.SetFrameIndexOfBitmap(0);
+	});
 }
 
 void CGameStateRun::game_update(Event event)
@@ -887,7 +945,7 @@ void CGameStateRun::fail_game_menu_click(UINT nFlags, CPoint point, GameType gam
 		music->Stop(AUDIO_ID::Arial_City);
 		audio_id = gametype == GameType::blitz ? AUDIO_ID::Hyper_Velocity : rand() % 6;
 		music->Play(audio_id, gametype == GameType::blitz ? false : true);
-		game_init(10, 20);
+		game_init();
 		retry.SetTopLeft(1921, 80);
 		back_to_tittle.SetTopLeft(1921, 200);
 		sub_phase = 2;
@@ -1195,7 +1253,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	lines_graph_top.LoadBitmapByString({ "resources/lines_graph_top.bmp" });
 	
-	cube = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH, Cube()));
 	cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH, Cube()));
 	cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH, Cube()));
 
@@ -1454,7 +1511,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
 				music->Play(audio_id, true);
-				game_init(10, 20);
+				game_init();
 				sub_phase = 2;
 			}
 			for (int i = 0; i < 4; i++)
@@ -1486,7 +1543,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				audio_id = rand() % 6;
 				music->Play(audio_id, true);
 				again[0].SetAnimation(60, true);
-				game_init(10, 20);
+				game_init();
 				sub_phase = 2;
 			}
 			if (click_check(nFlags, point, back))
@@ -1523,7 +1580,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
 				music->Play(audio_id);
-				game_init(10, 20);
+				game_init();
 				sub_phase = 2;
 			}
 			for (int i = 0; i < 4; i++)
@@ -1555,7 +1612,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				audio_id = AUDIO_ID::Hyper_Velocity;
 				music->Play(audio_id);
 				again[1].SetAnimation(60, true);
-				game_init(10, 20);
+				game_init();
 				sub_phase = 2;
 			}
 			if (click_check(nFlags, point, back))
@@ -1596,7 +1653,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				background.SetFrameIndexOfBitmap(rand() % 6);
 				game_next_decline_time = clock();
 				game_next_move_time = clock();
-				game_init(10, 20);
+				game_init();
 				tetris_game = save_tetris_game;
 				sub_phase = 2;
 			}
@@ -1635,7 +1692,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			music->Play(AUDIO_ID::Click_Menu);
 			music->Stop(AUDIO_ID::Arial_City);
 			music->Play(audio_id, true);
-			game_init(10, 20);
+			game_init();
 			sub_phase = 2;
 		}
 	}

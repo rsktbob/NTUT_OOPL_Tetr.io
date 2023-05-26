@@ -359,13 +359,14 @@ namespace game_framework {
 		deque<Tromino> next_tromino_array;
 		optional<Tromino> hold_tromino;
 		queue<Color> random_color_array;
-		Canvas canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
+		Canvas canvas;
 		Canvas place_canvas = Canvas(PLACE_CUBE_CANVAS_HEIGHT, vector<Color>(PLACE_CUBE_CANVAS_WIDTH));
 		Canvas hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
 		bool hold_once_per_round = true;
 
-		TetrisGame(unsigned int board_width, unsigned int board_height)
+		TetrisGame(int board_height, int board_width)
 		{
+			canvas = Canvas(board_height + 2, vector<Color>(board_width));
 			random_color_array = produce_seven_color_not_repeative();
 			active_tromino = Tromino::according_color_tromino(random_color_array.front());
 			predict_tromino_landing_position();
@@ -826,7 +827,8 @@ namespace game_framework {
 		void display_play_total_score();
 		void display_board();
 		void display_finish();
-		void game_init(unsigned int board_width, unsigned int board_height);
+		void game_init();
+		void game_custom_init(int board_height, int board_width);
 		void game_update(Event event);
 		void game_natural_decline();
 		void game_control();
@@ -895,8 +897,8 @@ namespace game_framework {
 		CMovingBitmap level_up_scene;
 		CMovingBitmap exit_scene;
 
-		TetrisGame tetris_game = TetrisGame(10, 20);
-		TetrisGame save_tetris_game = TetrisGame(10, 20);
+		TetrisGame tetris_game = TetrisGame(20, 10);
+		TetrisGame save_tetris_game = TetrisGame(20, 10);
 		vector<vector<CMovingBitmap>> cube = vector<vector<CMovingBitmap>>(CANVAS_HEIGHT, vector<CMovingBitmap>(CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_next = vector<vector<CMovingBitmap>>(PLACE_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(PLACE_CUBE_CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> cube_hold = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
