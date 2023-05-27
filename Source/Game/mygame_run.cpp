@@ -26,7 +26,7 @@ void TetrisGame::remove_and_prepend_rows() {
 			music->Play(AUDIO_ID::Cube_Clear);
 			per_round_lines += 1;
 			canvas.erase(canvas.begin() + row_index);
-			canvas.insert(canvas.begin(), vector<Color>(board_width, Color::black));
+			canvas.insert(canvas.begin(), vector<Color>(canvas_width, Color::black));
 		}
 	}
 	lines += per_round_lines;
@@ -339,9 +339,9 @@ void CGameStateRun::display_custom_control_menu()
 
 	CTextDraw::ChangeFontLog(pDC, 18, "微軟正黑體", RGB(228, 228, 228), 50);
 	CTextDraw::Print(pDC, 302, 325, "BOARD WIDTH");
-	CTextDraw::Print(pDC, 450, 325, to_string(board_width));
+	CTextDraw::Print(pDC, 450, 325, to_string(canvas_width));
 	CTextDraw::Print(pDC, 302, 358, "BOARD HEOGHT");
-	CTextDraw::Print(pDC, 473, 358, to_string(board_height));
+	CTextDraw::Print(pDC, 473, 358, to_string(canvas_height-2));
 
 	CDDraw::ReleaseBackCDC();
 
@@ -497,15 +497,15 @@ void CGameStateRun::game_init()
 	fire_animation_check = true;
 	level_up_animation_check = true;
 	finish_animation_check = true;
-	board_height = 20;
-	board_width = 10;
+	canvas_height = 22;
+	canvas_width = 10;
 	decline_distance = 0;
 	font_color = RGB(255, 255, 255);
 	font_decline_distance = 0;
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place_border.SetFrameIndexOfBitmap(0);
-	tetris_game = TetrisGame(20, 10);
+	tetris_game = TetrisGame(22, 10);
 	game_remaining_time = 120000;
 	game_current_time = clock();
 	tetris_game.init_time = clock();
@@ -559,23 +559,23 @@ void CGameStateRun::game_custom_init()
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	cube_place_border.SetFrameIndexOfBitmap(0);
-	tetris_game = TetrisGame(board_height, board_width);
+	tetris_game = TetrisGame(canvas_height, canvas_width);
 	game_remaining_time = 120000;
 	game_current_time = clock();
 	tetris_game.init_time = clock();
 	game_next_decline_time = clock();
 	game_next_move_time = clock();
-	cubes = vector<vector<CMovingBitmap>>(board_height+2, vector<CMovingBitmap>(board_width, Cube()));
-	int cubes_left = (10 - board_width) * 16 + 788;
-	int cubes_top = (20 - board_height) * 16 + 160;
-	int next_cubes_left = (board_width - 10) * 16 + 1154;
-	int next_cubes_top = (20 - board_height) * 16 + 270;
-	int hold_cubes_left = (10 - board_width) * 16 + 638;
-	int hold_cubes_top = (20 - board_height) * 16 + 267;
-	int lines_graph_left = (board_height - 20);
-	left_cube_border = vector<CMovingBitmap>(board_height, cube_staight_border);
-	right_cube_border = vector<CMovingBitmap>(board_height, lines_graph_border);
-	bottom_cube_border = vector<CMovingBitmap>(board_width+1, cube_horizontal_border);
+	cubes = vector<vector<CMovingBitmap>>(canvas_height, vector<CMovingBitmap>(canvas_width, Cube()));
+	int cubes_left = (10 - canvas_width) * 16 + 788;
+	int cubes_top = (22 - canvas_height) * 16 + 160;
+	int next_cubes_left = (canvas_width - 10) * 16 + 1154;
+	int next_cubes_top = (22 - canvas_height) * 16 + 270;
+	int hold_cubes_left = (10 - canvas_width) * 16 + 638;
+	int hold_cubes_top = (22 - canvas_height) * 16 + 267;
+	int lines_graph_left = (canvas_height - 22);
+	left_cube_border = vector<CMovingBitmap>(canvas_height-2, cube_staight_border);
+	right_cube_border = vector<CMovingBitmap>(canvas_height-2, lines_graph_border);
+	bottom_cube_border = vector<CMovingBitmap>(canvas_width+1, cube_horizontal_border);
 	for (int i = 0; i < (int)cubes.size(); i++)
 	{
 		for (int j = 0; j < (int)cubes[0].size(); j++)
@@ -600,18 +600,18 @@ void CGameStateRun::game_custom_init()
 	for (int i = 0; i < (int)left_cube_border.size(); i++)
 	{
 		left_cube_border[i].SetTopLeft(cubes_left-3, cubes_top + (i+2) * 32);
-		right_cube_border[i].SetTopLeft(cubes_left + board_width * 32, cubes_top + (i+2) * 32);
+		right_cube_border[i].SetTopLeft(cubes_left + canvas_width * 32, cubes_top + (i+2) * 32);
 	}
 	for (int i = 0; i < (int)bottom_cube_border.size(); i++)
 	{
-		bottom_cube_border[i].SetTopLeft(cubes_left+i*32-3, cubes_top + (board_height+2) * 32);
+		bottom_cube_border[i].SetTopLeft(cubes_left+i*32-3, cubes_top + (canvas_height+2) * 32);
 	}
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
 	{
 		lines_graph_body[i].SetTopLeft(1114, 847 - i * 16);
 	}
 	cube_hold_border.SetTopLeft(cubes_left - 168, cubes_top + 64);
-	cube_next_border.SetTopLeft(cubes_left + board_width * 32 + 29, cubes_top + 64);
+	cube_next_border.SetTopLeft(cubes_left + canvas_width * 32 + 29, cubes_top + 64);
 	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
 	{
 		fire.SetFrameIndexOfBitmap(0);
@@ -622,9 +622,9 @@ void CGameStateRun::game_update(Event event)
 {
 	tetris_game.event_handler(event);
 	Canvas canvas = tetris_game.canvas;
-	for (int i = 0; i < (int)board_height+2; i++)
+	for (int i = 0; i < canvas_height; i++)
 	{
-		for (int j = 0; j < (int)board_width; j++)
+		for (int j = 0; j < canvas_width; j++)
 		{
 			if (i < PREVIEW_ROW_COUNT && canvas[i][j] == Color::black)
 			{
@@ -1334,8 +1334,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	board_height_control[1].LoadBitmapByString({ "resources/down_1.bmp", "resources/down_2.bmp" });
 	board_height_control[1].SetTopLeft(1608, 370);
 
-	board_width = 10;
-	board_height = 20;
 
 	start[3].LoadBitmapByString({ "resources/custom_start_1.bmp", "resources/custom_start_2.bmp", "resources/custom_start_3.bmp", "resources/custom_start_4.bmp", "resources/custom_start_5.bmp",
 	"resources/custom_start_6.bmp", "resources/custom_start_7.bmp", "resources/custom_start_8.bmp", "resources/custom_start_7.bmp", "resources/custom_start_6.bmp", "resources/custom_start_5.bmp",
@@ -1768,7 +1766,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 	}
 	else if (phase == 6)
 	{
-		if (click_check(nFlags, point, board_width_control[0]))
+		/*if (click_check(nFlags, point, board_width_control[0]))
 		{
 			board_width = board_width >= 20 ? board_width : board_width+1;
 		}
@@ -1782,8 +1780,8 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		}
 		else if (click_check(nFlags, point, board_height_control[1]))
 		{
-			board_height = board_height <= 15 ? board_height : board_height-1;
-		}
+			canvas_height = board_height <= 15 ? board_height : board_height-1;
+		}*/
 		if (click_check(nFlags, point, back))
 		{
 			music->Play(AUDIO_ID::Back_Menu);
