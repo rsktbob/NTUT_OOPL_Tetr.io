@@ -572,7 +572,6 @@ void CGameStateRun::game_custom_init()
 	int next_cubes_top = (22 - canvas_height) * 16 + 270;
 	int hold_cubes_left = (10 - canvas_width) * 16 + 638;
 	int hold_cubes_top = (22 - canvas_height) * 16 + 267;
-	int lines_graph_left = (canvas_height - 22);
 	left_cube_border = vector<CMovingBitmap>(canvas_height-2, cube_staight_border);
 	right_cube_border = vector<CMovingBitmap>(canvas_height-2, lines_graph_border);
 	bottom_cube_border = vector<CMovingBitmap>(canvas_width+1, cube_horizontal_border);
@@ -604,7 +603,7 @@ void CGameStateRun::game_custom_init()
 	}
 	for (int i = 0; i < (int)bottom_cube_border.size(); i++)
 	{
-		bottom_cube_border[i].SetTopLeft(cubes_left+i*32-3, cubes_top + (canvas_height+2) * 32);
+		bottom_cube_border[i].SetTopLeft(cubes_left+i*32-3, cubes_top + canvas_height * 32);
 	}
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
 	{
@@ -1766,22 +1765,22 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 	}
 	else if (phase == 6)
 	{
-		/*if (click_check(nFlags, point, board_width_control[0]))
+		if (click_check(nFlags, point, board_width_control[0]))
 		{
-			board_width = board_width >= 20 ? board_width : board_width+1;
+			canvas_width = canvas_width >= 20 ? canvas_width : canvas_width+1;
 		}
 		else if (click_check(nFlags, point, board_width_control[1]))
 		{
-			board_width = board_width <= 6 ? board_width : board_width-1;
+			canvas_width = canvas_width <= 6 ? canvas_width : canvas_width-1;
 		}
 		if (click_check(nFlags, point, board_height_control[0]))
 		{
-			board_height = board_height >= 27 ? board_height : board_height+1;
+			canvas_height = canvas_height >= 29 ? canvas_height : canvas_height+1;
 		}
 		else if (click_check(nFlags, point, board_height_control[1]))
 		{
-			canvas_height = board_height <= 15 ? board_height : board_height-1;
-		}*/
+			canvas_height = canvas_height <= 18 ? canvas_height : canvas_height-1;
+		}
 		if (click_check(nFlags, point, back))
 		{
 			music->Play(AUDIO_ID::Back_Menu);
