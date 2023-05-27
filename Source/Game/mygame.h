@@ -24,6 +24,9 @@ const int NEXT_CUBE_CANVAS_HEIGHT = 14;
 const int HOLD_CUBE_CANVAS_WIDTH = 4;
 const int HOLD_CUBE_CANVAS_HEIGHT = 2;
 
+int  board_width;
+int board_height;
+
 using TrominoMatrix = vector<vector<char>>;
 
 
@@ -188,10 +191,9 @@ namespace game_framework {
 		Color color;
 		TrominoMatrix matrix;
 
-		Tromino(Color color, TrominoMatrix matrix)
-			: color(color), matrix(matrix)
+		Tromino(Color color, TrominoMatrix matrix) : color(color), matrix(matrix)
 		{
-			x = (CANVAS_WIDTH - width()) / 2;
+			x = (board_width - width()) / 2;
 			y = -height() + 1;
 		}
 
@@ -353,6 +355,8 @@ namespace game_framework {
 		int per_round_score = 0;
 		bool game_over = false;
 		bool game_success = false;
+		int board_width = 10;
+		int board_height = 22;
 		map<int, int> cleared_lines_to_get_score = { {1, 100}, {2, 300}, {3, 500}, {4, 800} };
 
 		optional<Tromino> active_tromino;
@@ -367,7 +371,9 @@ namespace game_framework {
 
 		TetrisGame(int height, int width)
 		{
-			canvas = Canvas(height + 2, vector<Color>(width));
+			board_height = height+2;
+			board_width = width;
+			canvas = Canvas(board_height, vector<Color>(board_width));
 			random_color_array = produce_seven_color_not_repeative();
 			active_tromino = Tromino::according_color_tromino(random_color_array.front());
 			predict_tromino_landing_position();
@@ -500,7 +506,7 @@ namespace game_framework {
 		{
 			int active_tromino_right = active_tromino->x + (active_tromino->width() - 1);
 
-			if (direction == HorizontalDirection::left ? (active_tromino->x == 0) : (active_tromino_right == CANVAS_WIDTH - 1))
+			if (direction == HorizontalDirection::left ? (active_tromino->x == 0) : (active_tromino_right == board_width - 1))
 			{
 				return false;
 			}
@@ -547,9 +553,9 @@ namespace game_framework {
 
 			active_tromino->matrix = new_matrix;
 
-			if (active_tromino->x + (active_tromino->width() - 1) >= CANVAS_WIDTH)
+			if (active_tromino->x + (active_tromino->width() - 1) >= board_width)
 			{
-				active_tromino->x = CANVAS_WIDTH - active_tromino->width();
+				active_tromino->x = board_width - active_tromino->width();
 			}
 		}
 
@@ -581,7 +587,7 @@ namespace game_framework {
 
 		bool is_active_tromino_reached_bottom()
 		{
-			if (active_tromino->y + active_tromino->height() >= CANVAS_HEIGHT)
+			if (active_tromino->y + active_tromino->height() >= board_height)
 			{
 				return true;
 			}
@@ -613,7 +619,7 @@ namespace game_framework {
 
 		bool is_predict_tromino_reached_bottom()
 		{
-			if (predict_tromino->y + predict_tromino->height() >= CANVAS_HEIGHT)
+			if (predict_tromino->y + predict_tromino->height() >= board_height)
 			{
 				return true;
 			}
@@ -749,7 +755,7 @@ namespace game_framework {
 
 		void clear_all_canvas()
 		{
-			canvas = Canvas(CANVAS_HEIGHT, vector<Color>(CANVAS_WIDTH));
+			canvas = Canvas(board_height, vector<Color>(board_width));
 			next_canvas = Canvas(NEXT_CUBE_CANVAS_HEIGHT, vector<Color>(NEXT_CUBE_CANVAS_WIDTH));
 			hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
 		}
@@ -831,7 +837,7 @@ namespace game_framework {
 		void display_custom_control_menu();
 		void display_finish();
 		void game_init();
-		void game_custom_init(int board_height, int board_width);
+		void game_custom_init();
 		void game_update(Event event);
 		void game_natural_decline();
 		void game_control();
@@ -889,10 +895,8 @@ namespace game_framework {
 		CMovingBitmap custom_control_menu;
 		vector<CMovingBitmap> board_width_control = vector<CMovingBitmap>(2);
 		vector<bool> board_width_control_selected = { false, false };
-		unsigned int  board_width;
 		vector<CMovingBitmap> board_height_control = vector<CMovingBitmap>(2);
 		vector<bool> board_height_control_selected = { false, false };
-		unsigned int board_height;
 
 		vector<CMovingBitmap> again = vector<CMovingBitmap>(2);
 		vector<CMovingBitmap> start = vector<CMovingBitmap>(4);
@@ -908,6 +912,9 @@ namespace game_framework {
 		CMovingBitmap cube_place_border;
 		CMovingBitmap cube_next_border;
 		CMovingBitmap cube_hold_border;
+		CMovingBitmap cube_staight_border;
+		CMovingBitmap cube_horizontal_border;
+		CMovingBitmap lines_graph_border;
 		vector<CMovingBitmap> left_cube_border;
 		vector<CMovingBitmap> right_cube_border;
 		vector<CMovingBitmap> bottom_cube_border;

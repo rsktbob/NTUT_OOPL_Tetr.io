@@ -26,7 +26,7 @@ void TetrisGame::remove_and_prepend_rows() {
 			music->Play(AUDIO_ID::Cube_Clear);
 			per_round_lines += 1;
 			canvas.erase(canvas.begin() + row_index);
-			canvas.insert(canvas.begin(), vector<Color>(CANVAS_WIDTH, Color::black));
+			canvas.insert(canvas.begin(), vector<Color>(board_width, Color::black));
 		}
 	}
 	lines += per_round_lines;
@@ -497,6 +497,8 @@ void CGameStateRun::game_init()
 	fire_animation_check = true;
 	level_up_animation_check = true;
 	finish_animation_check = true;
+	board_height = 20;
+	board_width = 10;
 	decline_distance = 0;
 	font_color = RGB(255, 255, 255);
 	font_decline_distance = 0;
@@ -542,7 +544,7 @@ void CGameStateRun::game_init()
 	cube_place_border.SetTopLeft(618, 224);
 }
 
-void CGameStateRun::game_custom_init(int board_height, int board_width)
+void CGameStateRun::game_custom_init()
 {
 	left_key_down = false;
 	right_key_down = false;
@@ -571,6 +573,9 @@ void CGameStateRun::game_custom_init(int board_height, int board_width)
 	int hold_cubes_left = (10 - board_width) * 16 + 638;
 	int hold_cubes_top = (20 - board_height) * 16 + 267;
 	int lines_graph_left = (board_height - 20);
+	left_cube_border = vector<CMovingBitmap>(board_height, cube_staight_border);
+	right_cube_border = vector<CMovingBitmap>(board_height, lines_graph_border);
+	bottom_cube_border = vector<CMovingBitmap>(board_width+1, cube_horizontal_border);
 	for (int i = 0; i < (int)cubes.size(); i++)
 	{
 		for (int j = 0; j < (int)cubes[0].size(); j++)
@@ -592,19 +597,21 @@ void CGameStateRun::game_custom_init(int board_height, int board_width)
 			hold_cubes[i][j].SetTopLeft(hold_cubes_left + j * 32, hold_cubes_top + i * 32);
 		}
 	}
-	for (int i = 0; i < (int)cubes.size(); i++)
+	for (int i = 0; i < (int)left_cube_border.size(); i++)
 	{
-		left_cube_border[i].SetTopLeft(cubes_left-3, cubes_top + i * 32);
-		right_cube_border[i].SetTopLeft(cubes_left + board_width * 32, cubes_top + i * 32);
+		left_cube_border[i].SetTopLeft(cubes_left-3, cubes_top + (i+2) * 32);
+		right_cube_border[i].SetTopLeft(cubes_left + board_width * 32, cubes_top + (i+2) * 32);
 	}
-	for (int i = 0; i < (int)cubes[0].size(); i++)
+	for (int i = 0; i < (int)bottom_cube_border.size(); i++)
 	{
-		bottom_cube_border[i].SetTopLeft(cubes_left+i*32, cubes_top + board_height * 32);
+		bottom_cube_border[i].SetTopLeft(cubes_left+i*32-3, cubes_top + (board_height+2) * 32);
 	}
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
 	{
 		lines_graph_body[i].SetTopLeft(1114, 847 - i * 16);
 	}
+	cube_hold_border.SetTopLeft(cubes_left - 168, cubes_top + 64);
+	cube_next_border.SetTopLeft(cubes_left + board_width * 32 + 29, cubes_top + 64);
 	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
 	{
 		fire.SetFrameIndexOfBitmap(0);
@@ -615,9 +622,9 @@ void CGameStateRun::game_update(Event event)
 {
 	tetris_game.event_handler(event);
 	Canvas canvas = tetris_game.canvas;
-	for (int i = 0; i < CANVAS_HEIGHT; i++)
+	for (int i = 0; i < (int)board_height+2; i++)
 	{
-		for (int j = 0; j < CANVAS_WIDTH; j++)
+		for (int j = 0; j < (int)board_width; j++)
 		{
 			if (i < PREVIEW_ROW_COUNT && canvas[i][j] == Color::black)
 			{
@@ -919,22 +926,7 @@ void CGameStateRun::game_model(GameType gametype)
 	}
 	else if (gametype == GameType::custom)
 	{
-		if (sub_phase == 1)
-		{
-			if (touch_option_menu_selected)
-			{
-				if (touch_option_menu_first)
-				{
-					music->Play(AUDIO_ID::Touch_Check_Menu);
-					touch_option_menu_first = false;
-				}
-			}
-			else
-			{
-				touch_option_menu_first = true;
-			}
-		}
-		else if (sub_phase == 2)
+		if (sub_phase == 2)
 		{
 			if (!tetris_game.game_over && !tetris_game.game_success)
 			{
@@ -1150,6 +1142,10 @@ void CGameStateRun::OnMove()							// 移動遊戲元素
 	{
 		game_model(GameType::zen);
 	}
+	else if (phase == 6)
+	{
+		game_model(GameType::custom);
+	}
 }
 
 void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
@@ -1349,6 +1345,13 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	cube_place_border.LoadBitmapByString({ "resources/cube_place_border.bmp", "resources/cube_place_border_game_over.bmp" }, RGB(0, 0, 255));
 	cube_place_border.SetTopLeft(618, 224);
 
+	cube_hold_border.LoadBitmapByString({ "resources/cube_hold_border.bmp" }, RGB(0, 0, 255));
+	cube_next_border.LoadBitmapByString({ "resources/cube_next_border.bmp" }, RGB(0, 0, 255));
+
+	cube_staight_border.LoadBitmapByString({ "resources/cube_straight_border.bmp" });
+	cube_horizontal_border.LoadBitmapByString({ "resources/cube_horizontal_border.bmp" });
+	lines_graph_border.LoadBitmapByString({ "resources/lines_graph_border.bmp" });
+
 	for (unsigned i = 0; i < lines_graph_body.size(); i++)
 	{
 		lines_graph_body[i].LoadBitmapByString({ "resources/lines_graph_body.bmp" });
@@ -1477,6 +1480,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	blitz_level_to_lines = { {1, 3}, {2, 5}, {3, 7}, {4, 9}, {5, 11}, {6, 13},{7, 15}, 
 	{8, 17}, {9, 19}, {10, 21}, {11, 24}, {12, 26}, {13, 28}, {14, 30}, {15, 32} };
+	
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -1795,7 +1799,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			music->Play(AUDIO_ID::Click_Menu);
 			music->Stop(AUDIO_ID::Arial_City);
 			music->Play(current_audio, true);
-			game_init();
+			game_custom_init();
 			sub_phase = 2;
 		}
 	}
@@ -2116,7 +2120,18 @@ void CGameStateRun::OnShow()
 		}
 		else if (sub_phase == 2)
 		{
-			
+			background.ShowBitmap();
+			display_custom_game();
+			//display_lines_graph(40);
+			if (tetris_game.game_over)
+			{
+				for_each(fire.begin(), fire.end(), [](CMovingBitmap& fire)
+				{
+					fire.ShowBitmap();
+				});
+			}
+
+			exit_scene.ShowBitmap();
 		}
 	}
 }
