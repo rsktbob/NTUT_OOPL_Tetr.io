@@ -103,7 +103,9 @@ namespace game_framework {
 		Game_Over_Menu,
 		Level_Up,
 		Exit_Process_Game,
-		Exit_Game
+		Exit_Game,
+		Random,
+		None
 	};
 
 	enum Color
@@ -155,30 +157,10 @@ namespace game_framework {
 		AUDIO_ID _click_audio_effect;
 		AUDIO_ID _next_background_music;
 
-		Button(AUDIO_ID touch_audio_effect, AUDIO_ID click_audio_effect, AUDIO_ID next_background_music) : CMovingBitmap(), 
-			_touch_audio_effect(touch_audio_effect), 
-			_click_audio_effect(click_audio_effect), 
-			_next_background_music(next_background_music) {}
+		Button(AUDIO_ID touch_audio_effect, AUDIO_ID click_audio_effect, AUDIO_ID next_background_music);
 
-		bool is_clicked(UINT nFlags, CPoint point, CMovingBitmap character)
-		{
-			if (is_touched(point, character) && nFlags == VK_LBUTTON)
-			{
-				return true;
-			}
-			return false;
-		}
-
-		bool is_touched(CPoint point, CMovingBitmap character)
-		{
-			if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth() && point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight())
-			{
-				_is_touched_first = false;
-				return true;
-			}
-			_is_touched_first = true;
-			return false;
-		}
+		bool is_clicked(UINT nFlags, CPoint point, CMovingBitmap character);
+		bool is_touched(CPoint point, CMovingBitmap character);
 	};
 
 	class Tromino
@@ -382,6 +364,7 @@ namespace game_framework {
 				next_tromino_array.emplace_back(Tromino::according_color_tromino(random_color_array.front(), canvas_width));
 				random_color_array.pop();
 			}
+			render_next_tromino_array_to_place_canvas();
 		}
 
 		void event_handler(Event event)
@@ -404,6 +387,7 @@ namespace game_framework {
 				}
 				next_tromino_array.emplace_back(Tromino::according_color_tromino(random_color_array.front(), canvas_width));
 				random_color_array.pop();
+				render_next_tromino_array_to_place_canvas();
 				hold_once_per_round = true;
 			}
 
@@ -441,14 +425,13 @@ namespace game_framework {
 			else if (event == Event::hold)
 			{
 				hold_active_tromino();
+				render_hold_tromino_to_hold_canvas();
 				predict_tromino_landing_position();
 			}
 
 			// Render active_tromino before proceeding as it may be reset later on
 
 			render_active_tromino_to_canvas();
-			render_next_tromino_array_to_place_canvas();
-			render_hold_tromino_to_hold_canvas();
 
 			if (is_active_tromino_reached_bottom())
 			{
@@ -845,14 +828,17 @@ namespace game_framework {
 		void fail_game_menu_move();
 		void fail_game_menu_click(UINT nFlags, CPoint point, GameType gametype);
 		void fail_game_menu_touch(CPoint point);
+		void change_background_music(AUDIO_ID new_background_music, bool is_cycled);
+		void change_scene(int new_phase, int new_sub_phase, AUDIO_ID new_background_music, bool is_cycled);
 		CMovingBitmap Cube();
 	protected:
 		void OnMove();									// 移動遊戲元素
 		void OnShow();									// 顯示這個狀態的遊戲畫面
 	private:
+		int id;
+		int background_music;
 		int phase;
 		int sub_phase;
-		int id;
 		bool fire_animation_check;
 		bool level_up_animation_check;
 		bool finish_animation_check;
@@ -921,7 +907,6 @@ namespace game_framework {
 		vector<CMovingBitmap> bottom_cube_border;
 		vector<CMovingBitmap> lines_graph_body = vector<CMovingBitmap>(40);
 		CMovingBitmap lines_graph_top;
-		int current_audio;
 		int record_current_time;
 		int game_next_decline_time;
 		int game_decline_time_interval;
