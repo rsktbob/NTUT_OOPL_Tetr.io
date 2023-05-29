@@ -893,6 +893,9 @@ namespace game_framework {
 		int board_height = 20;
 		int board_width = 10;
 
+		int straight_var = 0;
+		int horizontal_var = 0;
+
 		TetrisGame tetris_game = TetrisGame(22, 10);
 		TetrisGame save_tetris_game = TetrisGame(22, 10);
 		vector<vector<CMovingBitmap>> cubes;
@@ -906,7 +909,8 @@ namespace game_framework {
 		vector<CMovingBitmap> left_cube_border;
 		vector<CMovingBitmap> right_cube_border;
 		vector<CMovingBitmap> bottom_cube_border;
-		vector<CMovingBitmap> lines_graph_body = vector<CMovingBitmap>(40);
+		vector<CMovingBitmap> lines_graph;
+		CMovingBitmap lines_graph_body;
 		CMovingBitmap lines_graph_top;
 		int record_current_time;
 		int game_next_decline_time;

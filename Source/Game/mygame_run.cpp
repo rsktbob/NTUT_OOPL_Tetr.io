@@ -302,11 +302,11 @@ void CGameStateRun::display_lines_graph(unsigned lines_total)
 	{
 		if (i < lines - 1)
 		{
-			lines_graph_body[i].ShowBitmap();
+			lines_graph[i].ShowBitmap();
 		}
 		else
 		{
-			lines_graph_top.SetTopLeft(1114, lines_graph_body[i].GetTop());
+			lines_graph_top.SetTopLeft(1114, lines_graph[i].GetTop());
 			lines_graph_top.ShowBitmap();
 		}
 	}
@@ -431,7 +431,7 @@ bool CGameStateRun::game_over_animation()
 					hold_cubes[i][j].SetTopLeft(hold_cubes[i][j].GetLeft(), hold_cubes[i][j].GetTop() + 30);
 				}
 			}
-			for (unsigned i = 0; i < lines_graph_body.size(); i++) { lines_graph_body[i].SetTopLeft(lines_graph_body[i].GetLeft(), lines_graph_body[i].GetTop() + 30); }
+			for (unsigned i = 0; i < lines_graph.size(); i++) { lines_graph[i].SetTopLeft(lines_graph[i].GetLeft(), lines_graph[i].GetTop() + 30); }
 			for (unsigned i = 0; i < left_cube_border.size(); i++) 
 			{ 
 				left_cube_border[i].SetTopLeft(left_cube_border[i].GetLeft(), left_cube_border[i].GetTop() + 30);
@@ -539,7 +539,6 @@ void CGameStateRun::game_init()
 	font_decline_distance = 0;
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
-	//cube_place_border.SetFrameIndexOfBitmap(0);
 	tetris_game = TetrisGame(canvas_height, canvas_width);
 	game_remaining_time = 120000;
 	game_current_time = clock();
@@ -547,57 +546,69 @@ void CGameStateRun::game_init()
 	game_next_decline_time = clock();
 	game_next_move_time = clock();
 	cubes = vector<vector<CMovingBitmap>>(canvas_height, vector<CMovingBitmap>(canvas_width, Cube()));
-	int cubes_left = (10 - canvas_width) * 16 + 788;
-	int cubes_top = (22 - canvas_height) * 16 + 160;
-	int next_cubes_left = (canvas_width - 10) * 16 + 1154;
-	int next_cubes_top = (22 - canvas_height) * 16 + 270;
-	int hold_cubes_left = (10 - canvas_width) * 16 + 638;
-	int hold_cubes_top = (22 - canvas_height) * 16 + 267;
+	lines_graph = vector<CMovingBitmap>((canvas_height - 2) * 2, lines_graph_body);
+	straight_var = (22 - canvas_height) * 16;
+	horizontal_var = (10 - canvas_width) * 16;
+	int cubes_position_x = 788 + horizontal_var;
+	int cubes_position_y = 160 + straight_var;
+	int next_cubes_position_x = 1154 - horizontal_var;
+	int next_cubes_position_y = 270 + straight_var;
+	int hold_cubes_position_x = 638 + horizontal_var;
+	int hold_cubes_position_y = 267 + straight_var;
+	int left_cubes_border_position_x = 785 + horizontal_var;
+	int left_cubes_border_position_y = 224 + straight_var;
+	int right_cubes_border_position_x = 1108 - horizontal_var;
+	int right_cubes_border_position_y = 224 + straight_var;
+	int bottom_cubes_border_position_x = 785 + horizontal_var;
+	int bottom_cubes_border_position_y = 864 - straight_var;
+	int lines_graph_position_x = 1114 - horizontal_var;
+	int lines_graph_position_y = 847 - straight_var;
 	left_cube_border = vector<CMovingBitmap>(canvas_height - 2, cube_staight_border);
 	right_cube_border = vector<CMovingBitmap>(canvas_height - 2, lines_graph_border);
 	bottom_cube_border = vector<CMovingBitmap>(canvas_width + 1, cube_horizontal_border);
 	cube_hold_border.SetFrameIndexOfBitmap(0);
 	cube_next_border.SetFrameIndexOfBitmap(0);
+	fire[0].SetTopLeft(670 + horizontal_var, 78 + straight_var);
+	fire[1].SetTopLeft(1050 - horizontal_var, 78 + straight_var);
+	fire[2].SetTopLeft(670 + horizontal_var, 870 - straight_var);
+	fire[3].SetTopLeft(1050 - horizontal_var, 870 - straight_var);
 	for (int i = 0; i < (int)cubes.size(); i++)
 	{
 		for (int j = 0; j < (int)cubes[0].size(); j++)
 		{
-			cubes[i][j].SetTopLeft(cubes_left + j * 32, cubes_top + i * 32);
+			cubes[i][j].SetTopLeft(cubes_position_x + j * 32, cubes_position_y + i * 32);
 		}
 	}
 	for (int i = 0; i < 14; i++)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			next_cubes[i][j].SetTopLeft(next_cubes_left + j * 32, next_cubes_top + i * 32);
+			next_cubes[i][j].SetTopLeft(next_cubes_position_x + j * 32, next_cubes_position_y + i * 32);
 		}
 	}
 	for (int i = 0; i < HOLD_CUBE_CANVAS_HEIGHT; i++)
 	{
 		for (int j = 0; j < HOLD_CUBE_CANVAS_WIDTH; j++)
 		{
-			hold_cubes[i][j].SetTopLeft(hold_cubes_left + j * 32, hold_cubes_top + i * 32);
+			hold_cubes[i][j].SetTopLeft(hold_cubes_position_x + j * 32, hold_cubes_position_y + i * 32);
 		}
 	}
 	for (int i = 0; i < (int)left_cube_border.size(); i++)
 	{
-		left_cube_border[i].SetTopLeft(cubes_left - 3, cubes_top + (i + 2) * 32);
-		right_cube_border[i].SetTopLeft(cubes_left + canvas_width * 32, cubes_top + (i + 2) * 32);
+		left_cube_border[i].SetTopLeft(left_cubes_border_position_x, left_cubes_border_position_y + i * 32);
+		right_cube_border[i].SetTopLeft(right_cubes_border_position_x, right_cubes_border_position_y + i  * 32);
 	}
 	for (int i = 0; i < (int)bottom_cube_border.size(); i++)
 	{
-		bottom_cube_border[i].SetTopLeft(cubes_left + i * 32 - 3, cubes_top + canvas_height * 32);
+		bottom_cube_border[i].SetTopLeft(bottom_cubes_border_position_x + i * 32, bottom_cubes_border_position_y);
 	}
-	for (unsigned i = 0; i < lines_graph_body.size(); i++)
+	for (unsigned i = 0; i < lines_graph.size(); i++)
 	{
-		lines_graph_body[i].SetTopLeft(1114, 847 - i * 16);
+		lines_graph[i].SetTopLeft(lines_graph_position_x, lines_graph_position_y - i * 16);
 	}
-	cube_hold_border.SetTopLeft(cubes_left - 168, cubes_top + 64);
-	cube_next_border.SetTopLeft(cubes_left + canvas_width * 32 + 29, cubes_top + 64);
-	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire)
-	{
-		fire.SetFrameIndexOfBitmap(0);
-	});
+	cube_hold_border.SetTopLeft(cubes_position_x - 168, cubes_position_y + 64);
+	cube_next_border.SetTopLeft(cubes_position_x + canvas_width * 32 + 29, cubes_position_y + 64);
+	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire) { fire.SetFrameIndexOfBitmap(0); });
 }
 
 void CGameStateRun::game_update(Event event)
@@ -1347,10 +1358,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	cube_horizontal_border.LoadBitmapByString({ "resources/cube_horizontal_border.bmp", "resources/cube_horizontal_border_red.bmp"});
 	lines_graph_border.LoadBitmapByString({ "resources/lines_graph_border.bmp", "resources/lines_graph_border_red.bmp" });
 
-	for (unsigned i = 0; i < lines_graph_body.size(); i++)
-	{
-		lines_graph_body[i].LoadBitmapByString({ "resources/lines_graph_body.bmp" });
-	}
+	lines_graph_body.LoadBitmapByString({ "resources/lines_graph_body.bmp" });
 
 	lines_graph_top.LoadBitmapByString({ "resources/lines_graph_top.bmp" });
 
@@ -1366,7 +1374,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		"resources/fire_36_lt.bmp", "resources/fire_37_lt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
 	fire[0].SetAnimation(16, true);
-	fire[0].SetTopLeft(670, 78);
 
 	fire[1].LoadBitmapByString({ "resources/fire_1_rt.bmp", "resources/fire_2_rt.bmp", "resources/fire_3_rt.bmp", "resources/fire_4_rt.bmp", "resources/fire_5_rt.bmp",
 	"resources/fire_6_rt.bmp", "resources/fire_7_rt.bmp", "resources/fire_8_rt.bmp", "resources/fire_9_rt.bmp", "resources/fire_10_rt.bmp", "resources/fire_11_lt.bmp",
@@ -1377,7 +1384,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_36_rt.bmp", "resources/fire_37_rt.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
 	fire[1].SetAnimation(16, true);
-	fire[1].SetTopLeft(1050, 78);
 
 	fire[2].LoadBitmapByString({ "resources/fire_1_lb.bmp", "resources/fire_2_lb.bmp", "resources/fire_3_lb.bmp", "resources/fire_4_lb.bmp", "resources/fire_5_lb.bmp",
 	"resources/fire_6_lb.bmp", "resources/fire_7_lb.bmp", "resources/fire_8_lb.bmp", "resources/fire_9_lb.bmp", "resources/fire_10_lb.bmp", "resources/fire_11_lb.bmp",
@@ -1388,7 +1394,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_36_lb.bmp", "resources/fire_37_lb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
 	fire[2].SetAnimation(16, true);
-	fire[2].SetTopLeft(670, 870);
 
 	fire[3].LoadBitmapByString({ "resources/fire_1_rb.bmp", "resources/fire_2_rb.bmp", "resources/fire_3_rb.bmp", "resources/fire_4_rb.bmp", "resources/fire_5_rb.bmp",
 	"resources/fire_6_rb.bmp", "resources/fire_7_rb.bmp", "resources/fire_8_rb.bmp", "resources/fire_9_rb.bmp", "resources/fire_10_rb.bmp", "resources/fire_11_rb.bmp",
@@ -1399,7 +1404,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/fire_36_rb.bmp", "resources/fire_37_rb.bmp", "resources/fire_transparent.bmp" }, RGB(0, 0, 0));
 
 	fire[3].SetAnimation(16, true);
-	fire[3].SetTopLeft(1050, 870);
+
 	fire_animation_check = true;
 
 	level_up_scene.LoadBitmapByString({ "resources/level_up_cutscene_1.bmp", "resources/level_up_cutscene_2.bmp", "resources/level_up_cutscene_3.bmp", "resources/level_up_cutscene_4.bmp",
