@@ -174,11 +174,11 @@ void CGameStateRun::display_lines(unsigned lines_total)
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
-	CTextDraw::Print(pDC, 710, 715 + font_decline_distance, "LINES");
+	CTextDraw::Print(pDC, 710 + horizontal_var, 715 - straight_var + font_decline_distance, "LINES");
 	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 200);
-	CTextDraw::Print(pDC, 707 - lines_displacement_front, 740 + font_decline_distance, lines_display_front);
+	CTextDraw::Print(pDC, 707 + horizontal_var - lines_displacement_front, 740 - straight_var + font_decline_distance, lines_display_front);
 	CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", font_color, 200);
-	CTextDraw::Print(pDC, 733 + lines_displacement_back, 754 + font_decline_distance, lines_display_back);
+	CTextDraw::Print(pDC, 733 + horizontal_var + lines_displacement_back, 754 - straight_var + font_decline_distance, lines_display_back);
 
 	CDDraw::ReleaseBackCDC();
 }
@@ -199,11 +199,11 @@ void CGameStateRun::display_play_passed_time()
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
-	CTextDraw::Print(pDC, 718, 800 + font_decline_distance, "TIME");
+	CTextDraw::Print(pDC, 718 + horizontal_var, 800 - straight_var + font_decline_distance, "TIME");
 	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 50);
-	CTextDraw::Print(pDC, 630, 825 + font_decline_distance, time_display_front);
+	CTextDraw::Print(pDC, 630 + horizontal_var, 825 - straight_var + font_decline_distance, time_display_front);
 	CTextDraw::ChangeFontLog(pDC, 28, "微軟正黑體", font_color, 50);
-	CTextDraw::Print(pDC, 715, 838 + font_decline_distance, time_display_back);
+	CTextDraw::Print(pDC, 715 + horizontal_var, 838 - straight_var + font_decline_distance, time_display_back);
 
 	CDDraw::ReleaseBackCDC();
 }
@@ -257,10 +257,10 @@ void CGameStateRun::display_on_right_score()
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
-	CTextDraw::Print(pDC, 1145, 750 + font_decline_distance, "SCORE");
+	CTextDraw::Print(pDC, 1145 - horizontal_var, 750 + straight_var + font_decline_distance, "SCORE");
 
 	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 50);
-	CTextDraw::Print(pDC, 1145, 775 + font_decline_distance, score_display);
+	CTextDraw::Print(pDC, 1145 - horizontal_var, 775 + straight_var + font_decline_distance, score_display);
 
 	CDDraw::ReleaseBackCDC();
 }
@@ -287,17 +287,18 @@ void CGameStateRun::display_on_left_level()
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 22, "微軟正黑體", font_color, 50);
-	CTextDraw::Print(pDC, 707, 630 + font_decline_distance, "LEVEL");
+	CTextDraw::Print(pDC, 707 + horizontal_var, 630 - straight_var + font_decline_distance, "LEVEL");
 
 	CTextDraw::ChangeFontLog(pDC, 43, "微軟正黑體", font_color, 200);
-	CTextDraw::Print(pDC, 755 - level_displacement, 655 + font_decline_distance, level_display);
+	CTextDraw::Print(pDC, 755 + horizontal_var - level_displacement, 655 - straight_var + font_decline_distance, level_display);
 
 	CDDraw::ReleaseBackCDC();
 }
 
-void CGameStateRun::display_lines_graph(unsigned lines_total)
+void CGameStateRun::display_lines_graph(unsigned int lines_total)
 {
-	int lines = (int)round(tetris_game.lines * ((double)40 / lines_total)) > 40 ? 40 : (int)round(tetris_game.lines * ((double)40 / lines_total));
+	int length = (int)lines_graph.size();
+	int lines = (int)round(tetris_game.lines * ((double)length / lines_total)) > length ? length : (int)round(tetris_game.lines * ((double)length / lines_total));
 	for (int i = 0; i < lines; i++)
 	{
 		if (i < lines - 1)
@@ -306,7 +307,7 @@ void CGameStateRun::display_lines_graph(unsigned lines_total)
 		}
 		else
 		{
-			lines_graph_top.SetTopLeft(1114, lines_graph[i].GetTop());
+			lines_graph_top.SetTopLeft(lines_graph[i].GetLeft(), lines_graph[i].GetTop());
 			lines_graph_top.ShowBitmap();
 		}
 	}
@@ -346,7 +347,7 @@ void CGameStateRun::display_play_total_score()
 
 void  CGameStateRun::display_reciprocal_animation()
 {
-	if (120000 - (clock() - tetris_game.init_time) <= 10000 && 120000 - (clock() - tetris_game.init_time) > 0)
+	if (120000 - (clock() - tetris_game.init_time) <= 10000 && 120000 - (clock() - tetris_game.init_time) > 0 && !tetris_game.game_over)
 	{
 		string reciprocal_num = to_string(120000 - (clock() - tetris_game.init_time) < 0 ? 0 : (int)ceil((120000 - (double)(clock() - tetris_game.init_time)) / 1000));
 		unsigned reciprocal_num_displacement = reciprocal_num.length() * 35;
@@ -2126,7 +2127,11 @@ void CGameStateRun::OnShow()
 		{
 			background.ShowBitmap();
 			display_game();
-			//display_lines_graph(40);
+			display_lines_graph(150);
+			display_lines(150);
+			display_on_left_level();
+			display_play_passed_time();
+			display_on_right_score();
 			if (tetris_game.game_over)
 			{
 				for_each(fire.begin(), fire.end(), [](CMovingBitmap& fire)
