@@ -377,6 +377,7 @@ namespace game_framework {
 				if (hold_tromino.has_value())
 				{
 					hold_tromino->color = hold_tromino->according_matrix_return_color();
+					render_hold_tromino_to_hold_canvas();
 				}
 				this->active_tromino.emplace(next_tromino_array.front());
 				predict_tromino_landing_position();
@@ -796,13 +797,12 @@ namespace game_framework {
 		bool click_check(UINT nFlags, CPoint point, CMovingBitmap character);
 		bool touch_check(CPoint point, CMovingBitmap character);
 		void touch_option_menu(CPoint point);
+		void set_canvas(int hright, int width);
 		bool game_over_animation();
 		bool game_success_animation();
 		void game_level_up_animation();
 		void game_exit_animation();
-		void display_cubes();
 		void display_game();
-		void display_custom_game();
 		void display_lines(unsigned lines_total);
 		void display_play_passed_time();
 		void display_play_remaining_time();
@@ -818,7 +818,6 @@ namespace game_framework {
 		void display_custom_control_menu();
 		void display_finish();
 		void game_init();
-		void game_custom_init();
 		void game_update(Event event);
 		void game_natural_decline();
 		void game_control();
@@ -891,12 +890,14 @@ namespace game_framework {
 		int canvas_height = 22;
 		int canvas_width = 10;
 
+		int board_height = 20;
+		int board_width = 10;
+
 		TetrisGame tetris_game = TetrisGame(22, 10);
 		TetrisGame save_tetris_game = TetrisGame(22, 10);
 		vector<vector<CMovingBitmap>> cubes;
 		vector<vector<CMovingBitmap>> next_cubes = vector<vector<CMovingBitmap>>(NEXT_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(NEXT_CUBE_CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> hold_cubes = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
-		CMovingBitmap cube_place_border;
 		CMovingBitmap cube_next_border;
 		CMovingBitmap cube_hold_border;
 		CMovingBitmap cube_staight_border;
