@@ -330,16 +330,16 @@ void CGameStateRun::display_play_real_time(COLORREF color)
 	CDC *pDC = CDDraw::GetBackCDC();
 
 	CTextDraw::ChangeFontLog(pDC, 30, "微軟正黑體", color, 50);
-	CTextDraw::Print(pDC, 200, 964, real_time_display);
+	CTextDraw::Print(pDC, 385, 964, real_time_display);
 
 	CDDraw::ReleaseBackCDC();
 }
 
-void CGameStateRun::display_play_total_score()
+void CGameStateRun::display_play_total_score(COLORREF color)
 {
 	CDC *pDC = CDDraw::GetBackCDC();
 
-	CTextDraw::ChangeFontLog(pDC, 120, "微軟正黑體", RGB(243, 197, 197), 50);
+	CTextDraw::ChangeFontLog(pDC, 120, "微軟正黑體", color, 50);
 	CTextDraw::Print(pDC, 931 - end_score_displacement, 180, end_score_display);
 
 	CDDraw::ReleaseBackCDC();
@@ -922,7 +922,7 @@ void CGameStateRun::game_model(GameType gametype)
 	{
 		if (sub_phase == 2)
 		{
-			if (!tetris_game.game_over && !tetris_game.game_success)
+			if (!tetris_game.game_over)
 			{
 				if (game_next_decline_time <= clock())
 				{
@@ -931,10 +931,6 @@ void CGameStateRun::game_model(GameType gametype)
 				if (game_next_move_time <= clock())
 				{
 					game_control();
-				}
-				if (tetris_game.lines >= 40)
-				{
-					tetris_game.game_success = true;
 				}
 				if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
 				{
@@ -947,25 +943,16 @@ void CGameStateRun::game_model(GameType gametype)
 				{
 					music->Stop(background_music);
 					music->Play(AUDIO_ID::Game_Over_Menu);
+					music->Play(AUDIO_ID::Classy_Cat, true);
+					background_music = AUDIO_ID::Classy_Cat;
+					again[2].SetAnimation(60, false);
+					game_record_current_time();
+					game_record_current_score();
 					sub_phase = 3;
-				}
-			}
-			else {
-				if (!game_success_animation())
-				{
-					background_music = AUDIO_ID::Success_Story_Akiko_Shioyama;
-					music->Play(background_music, true);
-					tittle.SetFrameIndexOfBitmap(6);
-					again[0].SetAnimation(60, false);
-					sub_phase = 4;
 				}
 			}
 		}
 		else if (sub_phase == 3)
-		{
-			fail_game_menu_move();
-		}
-		else if (sub_phase == 4)
 		{
 			if (back.GetLeft() < 0 && back_selected)
 			{
@@ -1176,6 +1163,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Success_Story_Akiko_Shioyama, "resources/Success_Story_Akiko_Shioyama.wav");
 	music->Load(AUDIO_ID::Hyper_Velocity, "resources/Hyper_Velocity.wav");
 	music->Load(AUDIO_ID::Philosophy, "resources/Philosophy.wav");
+	music->Load(AUDIO_ID::Classy_Cat, "resources/Classy_Cat.wav");
 	music->Load(AUDIO_ID::Touch_Menu, "resources/Touch_Menu.wav");
 	music->Load(AUDIO_ID::Click_Menu, "resources/Click_Menu.wav");
 	music->Load(AUDIO_ID::Back_Menu, "resources/Back_Menu.wav");
@@ -1266,6 +1254,11 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 		"resources/blitz_again_4.bmp" , "resources/blitz_again_3.bmp" , "resources/blitz_again_2.bmp" });
 	again[1].SetTopLeft(1394, 357);
 
+	again[2].LoadBitmapByString({ "resources/custom_again_1.bmp", "resources/custom_again_2.bmp", "resources/custom_again_3.bmp", "resources/custom_again_4.bmp", "resources/custom_again_5.bmp",
+	"resources/custom_again_6.bmp", "resources/custom_again_7.bmp", "resources/custom_again_8.bmp", "resources/custom_again_7.bmp", "resources/custom_again_6.bmp", "resources/custom_again_5.bmp",
+	"resources/custom_again_4.bmp" , "resources/custom_again_3.bmp" , "resources/custom_again_2.bmp" });
+	again[2].SetTopLeft(1394, 357);
+
 	for (int i = 0; i < 4; i++)
 	{
 		fourtyl_menu_check[i].LoadBitmapByString({ "resources/check_transparent.bmp" }, RGB(255, 255, 255));
@@ -1297,7 +1290,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	blitz_end_menu[1].SetTopLeft(270, 358);
 
 	blitz_end_menu[2].LoadBitmapByString({ "resources/blitz_model.bmp" });
-	blitz_end_menu[2].SetTopLeft(0, 960);
+	blitz_end_menu[2].SetTopLeft(0, 957);
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -1317,8 +1310,8 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	zen_menu[1].LoadBitmapByString({ "resources/zen_blank.bmp" });
 	zen_menu[1].SetTopLeft(270, 284);
 
-	zen_model.LoadBitmapByString({ "resources/zen_model.bmp" }, RGB(0, 0, 255));
-	zen_model.SetTopLeft(1800, 0);
+	zen_mode.LoadBitmapByString({ "resources/zen_mode.bmp" }, RGB(0, 0, 255));
+	zen_mode.SetTopLeft(1800, 0);
 
 	start[2].LoadBitmapByString({ "resources/zen_start_1.bmp", "resources/zen_start_2.bmp", "resources/zen_start_3.bmp", "resources/zen_start_4.bmp", "resources/zen_start_5.bmp",
 		"resources/zen_start_6.bmp", "resources/zen_start_7.bmp", "resources/zen_start_8.bmp", "resources/zen_start_7.bmp", "resources/zen_start_6.bmp", "resources/zen_start_5.bmp",
@@ -1333,6 +1326,15 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	custom_control_menu.LoadBitmapByString({ "resources/board.bmp" });
 	custom_control_menu.SetTopLeft(270, 321);
+
+	custom_end_menu[0].LoadBitmapByString({ "resources/custom_final_score.bmp" });
+	custom_end_menu[0].SetTopLeft(270, 100);
+
+	custom_end_menu[1].LoadBitmapByString({ "resources/custom_music.bmp" });
+	custom_end_menu[1].SetTopLeft(270, 358);
+
+	custom_end_menu[2].LoadBitmapByString({ "resources/custom_model.bmp" });
+	custom_end_menu[2].SetTopLeft(0, 957);
 
 	board_width_control[0].LoadBitmapByString({ "resources/up_1.bmp", "resources/up_2.bmp" });
 	board_width_control[0].SetTopLeft(1608, 326);
@@ -1772,40 +1774,69 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 	}
 	else if (phase == 6)
 	{
-		if (click_check(nFlags, point, board_width_control[0]))
+		if (sub_phase == 1)
 		{
-			board_width = board_width >= 30 ? board_width : board_width + 1;
+			if (click_check(nFlags, point, board_width_control[0]))
+			{
+				board_width = board_width >= 30 ? board_width : board_width + 1;
+			}
+			else if (click_check(nFlags, point, board_width_control[1]))
+			{
+				board_width = board_width <= 6 ? board_width : board_width - 1;
+			}
+			if (click_check(nFlags, point, board_height_control[0]))
+			{
+				board_height = board_height >= 30 ? board_height : board_height + 1;
+			}
+			else if (click_check(nFlags, point, board_height_control[1]))
+			{
+				board_height = board_height <= 16 ? board_height : board_height - 1;
+			}
+			if (click_check(nFlags, point, back))
+			{
+				music->Play(AUDIO_ID::Back_Menu);
+				tittle.SetFrameIndexOfBitmap(1);
+				back.SetFrameIndexOfBitmap(0);
+				start[id].SetAnimation(60, true);
+				game_mode.SetFrameIndexOfBitmap(0);
+				phase = 2;
+			}
+			if (click_check(nFlags, point, start[3]))
+			{
+				background_music = rand() % 6;
+				music->Play(AUDIO_ID::Click_Menu);
+				music->Stop(AUDIO_ID::Arial_City);
+				music->Play(background_music, true);
+				set_canvas(board_height, board_width);
+				game_init();
+				sub_phase = 2;
+			}
 		}
-		else if (click_check(nFlags, point, board_width_control[1]))
+		else if (sub_phase == 3)
 		{
-			board_width = board_width <= 6 ? board_width : board_width - 1;
-		}
-		if (click_check(nFlags, point, board_height_control[0]))
-		{
-			board_height = board_height >= 30 ? board_height : board_height + 1;
-		}
-		else if (click_check(nFlags, point, board_height_control[1]))
-		{
-			board_height = board_height <= 16 ? board_height : board_height - 1;
-		}
-		if (click_check(nFlags, point, back))
-		{
-			music->Play(AUDIO_ID::Back_Menu);
-			tittle.SetFrameIndexOfBitmap(1);
-			back.SetFrameIndexOfBitmap(0);
-			start[id].SetAnimation(60, true);
-			game_mode.SetFrameIndexOfBitmap(0);
-			phase = 2;
-		}
-		if (click_check(nFlags, point, start[3]))
-		{
-			background_music = rand() % 6;
-			music->Play(AUDIO_ID::Click_Menu);
-			music->Stop(AUDIO_ID::Arial_City);
-			music->Play(background_music, true);
-			set_canvas(board_height, board_width);
-			game_init();
-			sub_phase = 2;
+			if (click_check(nFlags, point, back))
+			{
+				music->Stop(background_music);
+				music->Play(AUDIO_ID::Back_Menu);
+				music->Play(AUDIO_ID::Arial_City, true);
+				again[2].SetAnimation(60, true);
+				tittle.SetFrameIndexOfBitmap(1);
+				back.SetFrameIndexOfBitmap(0);
+				start[id].SetAnimation(60, true);
+				game_mode.SetFrameIndexOfBitmap(0);
+				phase = 2;
+				sub_phase = 1;
+			}
+			if (click_check(nFlags, point, again[2]))
+			{
+				music->Play(AUDIO_ID::Click_Menu);
+				music->Stop(background_music);
+				background_music = rand() % 6;
+				music->Play(background_music, true);
+				again[2].SetAnimation(60, true);
+				game_init();
+				sub_phase = 2;
+			}
 		}
 	}
 }
@@ -2071,7 +2102,7 @@ void CGameStateRun::OnShow()
 
 			again[1].ShowBitmap();
 			back.ShowBitmap();
-			display_play_total_score();
+			display_play_total_score(RGB(243, 197, 197));
 			display_play_real_time(RGB(224, 159, 159));
 		}
 	}
@@ -2093,7 +2124,7 @@ void CGameStateRun::OnShow()
 		else if (sub_phase >= 2)
 		{
 			background.ShowBitmap();
-			zen_model.ShowBitmap();
+			zen_mode.ShowBitmap();
 
 			display_game();
 			display_on_button_score();
@@ -2141,6 +2172,15 @@ void CGameStateRun::OnShow()
 			}
 
 			exit_scene.ShowBitmap();
+		}
+		else if (sub_phase == 3)
+		{
+			tittle.ShowBitmap();
+			for (unsigned int i = 0; i < custom_end_menu.size(); i++) { custom_end_menu[i].ShowBitmap(); };
+			again[2].ShowBitmap();
+			back.ShowBitmap();
+			display_play_total_score(RGB(197, 179, 244));
+			display_play_real_time(RGB(157, 151, 243));
 		}
 	}
 }

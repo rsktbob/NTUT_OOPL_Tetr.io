@@ -85,6 +85,7 @@ namespace game_framework {
 		Success_Story_Akiko_Shioyama,
 		Hyper_Velocity,
 		Philosophy,
+		Classy_Cat,
 		Touch_Menu,
 		Click_Menu,
 		Back_Menu,
@@ -811,10 +812,10 @@ namespace game_framework {
 		void display_on_button_level();
 		void display_on_left_level();
 		void display_reciprocal_animation();
-		void display_lines_graph(unsigned lines_total);
+		void display_lines_graph(unsigned int lines_total);
 		void display_play_total_time();
 		void display_play_real_time(COLORREF color);
-		void display_play_total_score();
+		void display_play_total_score(COLORREF color);
 		void display_custom_control_menu();
 		void display_finish();
 		void game_init();
@@ -872,16 +873,18 @@ namespace game_framework {
 		vector<CMovingBitmap> blitz_end_menu = vector<CMovingBitmap>(3);
 
 		vector<CMovingBitmap> zen_menu = vector<CMovingBitmap>(2);
-		CMovingBitmap zen_model;
+		CMovingBitmap zen_mode;
 
 		vector<CMovingBitmap> custom_menu = vector<CMovingBitmap>(2);
 		CMovingBitmap custom_control_menu;
+		vector<CMovingBitmap> custom_end_menu = vector<CMovingBitmap>(3);
+
 		vector<CMovingBitmap> board_width_control = vector<CMovingBitmap>(2);
 		vector<bool> board_width_control_selected = { false, false };
 		vector<CMovingBitmap> board_height_control = vector<CMovingBitmap>(2);
 		vector<bool> board_height_control_selected = { false, false };
 
-		vector<CMovingBitmap> again = vector<CMovingBitmap>(2);
+		vector<CMovingBitmap> again = vector<CMovingBitmap>(3);
 		vector<CMovingBitmap> start = vector<CMovingBitmap>(4);
 		vector<CMovingBitmap> fire = vector<CMovingBitmap>(4);
 		CMovingBitmap level_up_scene;
