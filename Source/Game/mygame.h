@@ -803,6 +803,7 @@ namespace game_framework {
 		bool game_success_animation();
 		void game_level_up_animation();
 		void game_exit_animation();
+		void game_clear_lines_animation(int scene);
 		void display_game();
 		void display_lines(unsigned lines_total);
 		void display_play_passed_time();
@@ -818,6 +819,7 @@ namespace game_framework {
 		void display_play_total_score(COLORREF color);
 		void display_custom_control_menu();
 		void display_finish();
+		void display_clear_lines_animation();
 		void game_init();
 		void game_update(Event event);
 		void game_natural_decline();
@@ -934,6 +936,13 @@ namespace game_framework {
 		CMovingBitmap back_to_tittle;
 		bool back_to_tittle_selected;
 		
+		CMovingBitmap single_scene;
+		CMovingBitmap double_scene;
+		CMovingBitmap triple_scene;
+		CMovingBitmap quad_scene;
+
+		int current_lines;
+
 		unsigned game_remaining_time;
 		unsigned game_current_time;
 		unsigned game_minutes;

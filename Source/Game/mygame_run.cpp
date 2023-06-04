@@ -389,6 +389,14 @@ void CGameStateRun::display_finish()
 	CDDraw::ReleaseBackCDC();
 }
 
+void CGameStateRun::display_clear_lines_animation()
+{
+	single_scene.ShowBitmap();
+	double_scene.ShowBitmap();
+	triple_scene.ShowBitmap();
+	quad_scene.ShowBitmap();
+}
+
 bool CGameStateRun::game_over_animation()
 {
 	if (fire_animation_check)
@@ -535,6 +543,7 @@ void CGameStateRun::game_init()
 	fire_animation_check = true;
 	level_up_animation_check = true;
 	finish_animation_check = true;
+	current_lines = 0;
 	decline_distance = 0;
 	font_color = RGB(255, 255, 255);
 	font_decline_distance = 0;
@@ -573,6 +582,14 @@ void CGameStateRun::game_init()
 	fire[1].SetTopLeft(1050 - horizontal_var, 78 + straight_var);
 	fire[2].SetTopLeft(670 + horizontal_var, 870 - straight_var);
 	fire[3].SetTopLeft(1050 - horizontal_var, 870 - straight_var);
+	single_scene.SetTopLeft(520 + horizontal_var, 375 + straight_var);
+	single_scene.SetFrameIndexOfBitmap(12);
+	double_scene.SetTopLeft(450 + horizontal_var, 395 + straight_var);
+	double_scene.SetFrameIndexOfBitmap(12);
+	triple_scene.SetTopLeft(480 + horizontal_var, 388 + straight_var);
+	triple_scene.SetFrameIndexOfBitmap(12);
+	quad_scene.SetTopLeft(553 + horizontal_var, 383 + straight_var);
+	quad_scene.SetFrameIndexOfBitmap(12);
 	for (int i = 0; i < (int)cubes.size(); i++)
 	{
 		for (int j = 0; j < (int)cubes[0].size(); j++)
@@ -614,6 +631,8 @@ void CGameStateRun::game_init()
 
 void CGameStateRun::game_update(Event event)
 {
+	if (tetris_game.game_over) return;
+
 	tetris_game.event_handler(event);
 	Canvas canvas = tetris_game.canvas;
 	for (int i = 0; i < canvas_height; i++)
@@ -746,6 +765,11 @@ void CGameStateRun::game_model(GameType gametype)
 				{
 					game_exit_animation();
 				}
+				if (current_lines < tetris_game.lines)
+				{
+					game_clear_lines_animation(tetris_game.lines - current_lines);
+					current_lines = tetris_game.lines;
+				}
 			}
 			else if (tetris_game.game_over)
 			{
@@ -832,6 +856,11 @@ void CGameStateRun::game_model(GameType gametype)
 				{
 					tetris_game.game_success = true;
 				}
+				if (current_lines < tetris_game.lines)
+				{
+					game_clear_lines_animation(tetris_game.lines - current_lines);
+					current_lines = tetris_game.lines;
+				}
 			}
 			else if (tetris_game.game_over)
 			{
@@ -896,6 +925,11 @@ void CGameStateRun::game_model(GameType gametype)
 					game_exit_animation();
 					save_tetris_game = tetris_game;
 				}
+				if (current_lines < tetris_game.lines)
+				{
+					game_clear_lines_animation(tetris_game.lines - current_lines);
+					current_lines = tetris_game.lines;
+				}
 			}
 			else
 			{
@@ -936,6 +970,11 @@ void CGameStateRun::game_model(GameType gametype)
 				{
 					game_exit_animation();
 				}
+				if (current_lines < tetris_game.lines)
+				{
+					game_clear_lines_animation(tetris_game.lines - current_lines);
+					current_lines = tetris_game.lines;
+				}
 			}
 			else if (tetris_game.game_over)
 			{
@@ -969,6 +1008,30 @@ void CGameStateRun::game_model(GameType gametype)
 				back.SetTopLeft(back.GetLeft() - 10, 80);
 			}
 		}
+	}
+}
+
+void CGameStateRun::game_clear_lines_animation(int scene)
+{
+	if (scene == 1)
+	{
+		single_scene.SetFrameIndexOfBitmap(0);
+		single_scene.ToggleAnimation();
+	}
+	if (scene == 2)
+	{
+		double_scene.SetFrameIndexOfBitmap(0);
+		double_scene.ToggleAnimation();
+	}
+	if (scene == 3)
+	{
+		triple_scene.SetFrameIndexOfBitmap(0);
+		triple_scene.ToggleAnimation();
+	}
+	if (scene == 4)
+	{
+		quad_scene.SetFrameIndexOfBitmap(0);
+		quad_scene.ToggleAnimation();
 	}
 }
 
@@ -1476,6 +1539,30 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	back_to_tittle_selected = false;
 
 	fire_animation_check = true;
+
+	single_scene.LoadBitmapByString({ "resources/single_1.bmp", "resources/single_2.bmp", "resources/single_3.bmp" , "resources/single_4.bmp",
+	"resources/single_5.bmp", "resources/single_6.bmp", "resources/single_7.bmp" , "resources/single_8.bmp",  "resources/single_9.bmp",
+	"resources/single_10.bmp", "resources/single_11.bmp", "resources/single_12.bmp",  "resources/single_transparent.bmp" }, RGB(0, 0, 0));
+	single_scene.SetTopLeft(520, 375);
+	single_scene.SetAnimation(60, true);
+
+	double_scene.LoadBitmapByString({ "resources/double_1.bmp", "resources/double_2.bmp", "resources/double_3.bmp" , "resources/double_4.bmp",
+	"resources/double_5.bmp", "resources/double_6.bmp", "resources/double_7.bmp" , "resources/double_8.bmp",  "resources/double_9.bmp",
+	"resources/double_10.bmp", "resources/double_11.bmp", "resources/double_12.bmp", "resources/double_transparent.bmp"  }, RGB(0, 0, 0));
+	double_scene.SetTopLeft(450, 395);
+	double_scene.SetAnimation(60, true);
+
+	triple_scene.LoadBitmapByString({ "resources/triple_1.bmp", "resources/triple_2.bmp", "resources/triple_3.bmp" , "resources/triple_4.bmp",
+	"resources/triple_5.bmp", "resources/triple_6.bmp", "resources/triple_7.bmp" , "resources/triple_8.bmp",  "resources/triple_9.bmp",
+	"resources/triple_10.bmp", "resources/triple_11.bmp", "resources/triple_12.bmp", "resources/triple_transparent.bmp"  }, RGB(0, 0, 0));
+	triple_scene.SetTopLeft(480, 388);
+	triple_scene.SetAnimation(60, true);
+
+	quad_scene.LoadBitmapByString({ "resources/quad_1.bmp", "resources/quad_2.bmp", "resources/quad_3.bmp" , "resources/quad_4.bmp",
+	"resources/quad_5.bmp", "resources/quad_6.bmp", "resources/quad_7.bmp" , "resources/quad_8.bmp",  "resources/quad_9.bmp",
+	"resources/quad_10.bmp", "resources/quad_11.bmp", "resources/quad_12.bmp", "resources/quad_transparent.bmp"  }, RGB(0, 0, 0));
+	quad_scene.SetTopLeft(548, 383);
+	quad_scene.SetAnimation(60, true);
 
 	blitz_level_to_speed = { {1, 1000}, {2, 643} , {3, 404}, {4, 249},
 	{5, 111}, {6, 88}, {7, 50}, {8, 28}, {9, 15}, {10, 8}, {11, 4},
@@ -2002,6 +2089,7 @@ void CGameStateRun::OnShow()
 			display_play_passed_time();
 			exit_scene.ShowBitmap();
 			display_lines_graph(40);
+			display_clear_lines_animation();
 
 			if (tetris_game.game_over)
 			{
@@ -2067,6 +2155,7 @@ void CGameStateRun::OnShow()
 			display_on_right_score();
 			display_reciprocal_animation();
 			exit_scene.ShowBitmap();
+			display_clear_lines_animation();
 
 			if (tetris_game.game_over)
 			{
@@ -2131,6 +2220,7 @@ void CGameStateRun::OnShow()
 			display_on_button_level();
 			display_lines_graph(20);
 			exit_scene.ShowBitmap();
+			display_clear_lines_animation();
 
 			level_up_scene.ShowBitmap();
 		}
@@ -2163,6 +2253,7 @@ void CGameStateRun::OnShow()
 			display_on_left_level();
 			display_play_passed_time();
 			display_on_right_score();
+			display_clear_lines_animation();
 			if (tetris_game.game_over)
 			{
 				for_each(fire.begin(), fire.end(), [](CMovingBitmap& fire)
