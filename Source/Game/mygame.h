@@ -105,6 +105,7 @@ namespace game_framework {
 		Level_Up,
 		Exit_Process_Game,
 		Exit_Game,
+		Game_Start_Count,
 		Random,
 		None
 	};
@@ -334,6 +335,7 @@ namespace game_framework {
 		int level = 1;
 		int init_time = 0;
 		int per_round_score = 0;
+		bool game_start = false;
 		bool game_over = false;
 		bool game_success = false;
 		int canvas_width = 10;
@@ -804,6 +806,7 @@ namespace game_framework {
 		void game_level_up_animation();
 		void game_exit_animation();
 		void game_clear_lines_animation(int scene);
+		bool game_start_animation(GameType gametype);
 		void display_game();
 		void display_lines(unsigned lines_total);
 		void display_play_passed_time();
@@ -820,6 +823,7 @@ namespace game_framework {
 		void display_custom_control_menu();
 		void display_finish();
 		void display_clear_lines_animation();
+		void display_game_start_animation();
 		void game_init();
 		void game_update(Event event);
 		void game_natural_decline();
@@ -828,7 +832,7 @@ namespace game_framework {
 		void game_record_current_score();
 		void game_model(GameType gametype);
 		void fail_game_menu_move();
-		void fail_game_menu_click(UINT nFlags, CPoint point, GameType gametype);
+		void fail_game_menu_click(UINT nFlags, CPoint point);
 		void fail_game_menu_touch(CPoint point);
 		void change_background_music(AUDIO_ID new_background_music, bool is_cycled);
 		void change_scene(int new_phase, int new_sub_phase, AUDIO_ID new_background_music, bool is_cycled);
@@ -970,8 +974,8 @@ namespace game_framework {
 		char real_time_display[20] = {};
 		string score_display;
 		char level_display[10] = {};
-
-		time_t now;
+		string start_animation_font;
+		vector<bool> is_played_start_animation_effect;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////

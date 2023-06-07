@@ -188,7 +188,7 @@ void CGameStateRun::display_play_passed_time()
 {
 	if (!tetris_game.game_success)
 	{
-		game_current_time = clock() - tetris_game.init_time;
+		game_current_time = tetris_game.game_start == true ? clock() - tetris_game.init_time : 0;
 		game_minutes = game_current_time / 60000;
 		game_seconds = (game_current_time / 1000) % 60;
 		game_milliseconds = game_current_time % 1000;
@@ -211,6 +211,7 @@ void CGameStateRun::display_play_passed_time()
 void CGameStateRun::display_play_remaining_time()
 {
 	game_remaining_time = 120000 - (clock() - tetris_game.init_time) >= 0 ? 120000 - (clock() - tetris_game.init_time) : 0;
+	game_remaining_time = tetris_game.game_start == true ? game_remaining_time : 120000;
 	game_minutes = game_remaining_time / 60000;
 	game_seconds = (game_remaining_time / 1000) % 60;
 	game_milliseconds = game_remaining_time % 1000;
@@ -395,6 +396,19 @@ void CGameStateRun::display_clear_lines_animation()
 	double_scene.ShowBitmap();
 	triple_scene.ShowBitmap();
 	quad_scene.ShowBitmap();
+}
+
+void CGameStateRun::display_game_start_animation()
+{
+	if (!tetris_game.game_start)
+	{
+		int left_position = start_animation_font.length() == 1 ? 915 : 861;
+		CDC *pDC = CDDraw::GetBackCDC();
+
+		CTextDraw::ChangeFontLog(pDC, 120, "微軟正黑體", RGB(247, 193, 4), 50);
+		CTextDraw::Print(pDC, left_position, 480, start_animation_font);
+		CDDraw::ReleaseBackCDC();
+	}
 }
 
 bool CGameStateRun::game_over_animation()
@@ -627,6 +641,8 @@ void CGameStateRun::game_init()
 	cube_hold_border.SetTopLeft(cubes_position_x - 168, cubes_position_y + 64);
 	cube_next_border.SetTopLeft(cubes_position_x + canvas_width * 32 + 29, cubes_position_y + 64);
 	for_each(fire.begin(), fire.end(), [](CMovingBitmap fire) { fire.SetFrameIndexOfBitmap(0); });
+	is_played_start_animation_effect = vector<bool>(4, false);
+	game_update(Event::tick);
 }
 
 void CGameStateRun::game_update(Event event)
@@ -698,7 +714,7 @@ void CGameStateRun::game_control()
 
 void CGameStateRun::game_record_current_time()
 {
-	now = time(0);
+	time_t now = time(0);
 	tm *localtm = localtime(&now);
 
 	int real_time_year = localtm->tm_year + 1900;
@@ -749,26 +765,29 @@ void CGameStateRun::game_model(GameType gametype)
 		{
 			if (!tetris_game.game_over && !tetris_game.game_success)
 			{
-				if (game_next_decline_time <= clock())
+				if (!game_start_animation(GameType::fourtyl))
 				{
-					game_natural_decline();
-				}
-				if (game_next_move_time <= clock())
-				{
-					game_control();
-				}
-				if (tetris_game.lines >= 40)
-				{
-					tetris_game.game_success = true;
-				}
-				if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
-				{
-					game_exit_animation();
-				}
-				if (current_lines < tetris_game.lines)
-				{
-					game_clear_lines_animation(tetris_game.lines - current_lines);
-					current_lines = tetris_game.lines;
+					if (game_next_decline_time <= clock())
+					{
+						game_natural_decline();
+					}
+					if (game_next_move_time <= clock())
+					{
+						game_control();
+					}
+					if (tetris_game.lines >= 40)
+					{
+						tetris_game.game_success = true;
+					}
+					if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
+					{
+						game_exit_animation();
+					}
+					if (current_lines < tetris_game.lines)
+					{
+						game_clear_lines_animation(tetris_game.lines - current_lines);
+						current_lines = tetris_game.lines;
+					}
 				}
 			}
 			else if (tetris_game.game_over)
@@ -834,32 +853,35 @@ void CGameStateRun::game_model(GameType gametype)
 		{
 			if (!tetris_game.game_over && !tetris_game.game_success)
 			{
-				if (game_next_decline_time <= clock())
+				if (!game_start_animation(GameType::blitz))
 				{
-					game_natural_decline();
-				}
-				if (game_next_move_time <= clock())
-				{
-					game_control();
-				}
-				if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
-				{
-					game_exit_animation();
-				}
-				if (tetris_game.lines >= blitz_level_to_lines[tetris_game.level])
-				{
-					tetris_game.lines -= blitz_level_to_lines[tetris_game.level];
-					tetris_game.level += 1;
-					game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
-				}
-				if (game_remaining_time == 0)
-				{
-					tetris_game.game_success = true;
-				}
-				if (current_lines < tetris_game.lines)
-				{
-					game_clear_lines_animation(tetris_game.lines - current_lines);
-					current_lines = tetris_game.lines;
+					if (game_next_decline_time <= clock())
+					{
+						game_natural_decline();
+					}
+					if (game_next_move_time <= clock())
+					{
+						game_control();
+					}
+					if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
+					{
+						game_exit_animation();
+					}
+					if (tetris_game.lines >= blitz_level_to_lines[tetris_game.level])
+					{
+						tetris_game.lines -= blitz_level_to_lines[tetris_game.level];
+						tetris_game.level += 1;
+						game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
+					}
+					if (game_remaining_time == 0)
+					{
+						tetris_game.game_success = true;
+					}
+					if (current_lines < tetris_game.lines)
+					{
+						game_clear_lines_animation(tetris_game.lines - current_lines);
+						current_lines = tetris_game.lines;
+					}
 				}
 			}
 			else if (tetris_game.game_over)
@@ -958,22 +980,25 @@ void CGameStateRun::game_model(GameType gametype)
 		{
 			if (!tetris_game.game_over)
 			{
-				if (game_next_decline_time <= clock())
+				if (!game_start_animation(GameType::custom))
 				{
-					game_natural_decline();
-				}
-				if (game_next_move_time <= clock())
-				{
-					game_control();
-				}
-				if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
-				{
-					game_exit_animation();
-				}
-				if (current_lines < tetris_game.lines)
-				{
-					game_clear_lines_animation(tetris_game.lines - current_lines);
-					current_lines = tetris_game.lines;
+					if (game_next_decline_time <= clock())
+					{
+						game_natural_decline();
+					}
+					if (game_next_move_time <= clock())
+					{
+						game_control();
+					}
+					if (exit_check || exit_scene.GetFrameIndexOfBitmap() != 31)
+					{
+						game_exit_animation();
+					}
+					if (current_lines < tetris_game.lines)
+					{
+						game_clear_lines_animation(tetris_game.lines - current_lines);
+						current_lines = tetris_game.lines;
+					}
 				}
 			}
 			else if (tetris_game.game_over)
@@ -1035,6 +1060,66 @@ void CGameStateRun::game_clear_lines_animation(int scene)
 	}
 }
 
+bool CGameStateRun::game_start_animation(GameType gametype)
+{
+	if (!tetris_game.game_start)
+	{
+		if (gametype != GameType::zen)
+		{
+			int reciprocal = 4000 - (clock() - tetris_game.init_time);
+			if (reciprocal > 500)
+			{
+				reciprocal = (int)((double)(reciprocal) / 1000);
+				if (!is_played_start_animation_effect[reciprocal])
+				{
+					music->Play(AUDIO_ID::Game_Start_Count);
+					is_played_start_animation_effect[reciprocal] = true;
+				}
+				start_animation_font = reciprocal == 0 ? "Go" : to_string(reciprocal);
+				return true;
+			}
+			tetris_game.game_start = true;
+			tetris_game.init_time = clock();
+			if (gametype == GameType::fourtyl || gametype == GameType::custom)
+			{
+				change_background_music((AUDIO_ID)(rand() % 6), true);
+			}
+			else
+			{
+				change_background_music(AUDIO_ID::Hyper_Velocity, false);
+			}
+		}
+		else
+		{
+			int reciprocal = 2000 - (clock() - tetris_game.init_time);
+			if (reciprocal > 500)
+			{
+				reciprocal = (int)((double)(reciprocal) / 500);
+				if (!is_played_start_animation_effect[reciprocal])
+				{
+					music->Play(AUDIO_ID::Game_Start_Count);
+					is_played_start_animation_effect[reciprocal] = true;
+				}
+				if (reciprocal == 3)
+				{
+					start_animation_font = "Ready";
+				}
+				else if (reciprocal == 2)
+				{
+					start_animation_font = "Set";
+				}
+				else
+				{
+					start_animation_font = "Go";
+				}
+				return true;
+			}
+		}
+		tetris_game.game_start = true;
+	}
+	return false;
+}
+
 void CGameStateRun::fail_game_menu_move()
 {
 	if (retry.GetLeft() <= 381)
@@ -1076,14 +1161,12 @@ void CGameStateRun::fail_game_menu_move()
 	}
 }
 
-void CGameStateRun::fail_game_menu_click(UINT nFlags, CPoint point, GameType gametype)
+void CGameStateRun::fail_game_menu_click(UINT nFlags, CPoint point)
 {
 	if (click_check(nFlags, point, retry))
 	{
 		music->Play(AUDIO_ID::Back_Menu);
 		music->Stop(AUDIO_ID::Arial_City);
-		background_music = gametype == GameType::blitz ? AUDIO_ID::Hyper_Velocity : rand() % 6;
-		music->Play(background_music, gametype == GameType::blitz ? false : true);
 		game_init();
 		retry.SetTopLeft(1921, 80);
 		back_to_tittle.SetTopLeft(1921, 200);
@@ -1246,6 +1329,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	music->Load(AUDIO_ID::Level_Up, "resources/level_Up.wav");
 	music->Load(AUDIO_ID::Exit_Process_Game, "resources/Exit_Process_Game.wav");
 	music->Load(AUDIO_ID::Exit_Game, "resources/Exit_Game.wav");
+	music->Load(AUDIO_ID::Game_Start_Count, "resources/Game_Start_Count.wav");
 
 	change_background_music(AUDIO_ID::Arial_City, true);
 
@@ -1564,6 +1648,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	quad_scene.SetTopLeft(548, 383);
 	quad_scene.SetAnimation(60, true);
 
+
 	blitz_level_to_speed = { {1, 1000}, {2, 643} , {3, 404}, {4, 249},
 	{5, 111}, {6, 88}, {7, 50}, {8, 28}, {9, 15}, {10, 8}, {11, 4},
 	{12, 2}, {13, 1}, {14, 1}, {15, 1} };
@@ -1704,10 +1789,8 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[0]))
 			{
-				background_music = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(background_music, true);
 				set_canvas(20, 10);
 				game_init();
 				sub_phase = 2;
@@ -1730,7 +1813,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		}
 		else if (sub_phase == 3)
 		{
-			fail_game_menu_click(nFlags, point, GameType::fourtyl);
+			fail_game_menu_click(nFlags, point);
 		}
 		else if (sub_phase == 4)
 		{
@@ -1774,10 +1857,8 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[1]))
 			{
-				background_music = AUDIO_ID::Hyper_Velocity;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(background_music);
 				set_canvas(20, 10);
 				game_init();
 				sub_phase = 2;
@@ -1800,7 +1881,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 		}
 		else if (sub_phase == 3)
 		{
-			fail_game_menu_click(nFlags, point, GameType::blitz);
+			fail_game_menu_click(nFlags, point);
 		}
 		else if (sub_phase == 4)
 		{
@@ -1890,10 +1971,8 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			}
 			if (click_check(nFlags, point, start[3]))
 			{
-				background_music = rand() % 6;
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(AUDIO_ID::Arial_City);
-				music->Play(background_music, true);
 				set_canvas(board_height, board_width);
 				game_init();
 				sub_phase = 2;
@@ -2090,6 +2169,7 @@ void CGameStateRun::OnShow()
 			exit_scene.ShowBitmap();
 			display_lines_graph(40);
 			display_clear_lines_animation();
+			display_game_start_animation();
 
 			if (tetris_game.game_over)
 			{
@@ -2156,6 +2236,7 @@ void CGameStateRun::OnShow()
 			display_reciprocal_animation();
 			exit_scene.ShowBitmap();
 			display_clear_lines_animation();
+			display_game_start_animation();
 
 			if (tetris_game.game_over)
 			{
@@ -2221,6 +2302,7 @@ void CGameStateRun::OnShow()
 			display_lines_graph(20);
 			exit_scene.ShowBitmap();
 			display_clear_lines_animation();
+			display_game_start_animation();
 
 			level_up_scene.ShowBitmap();
 		}
@@ -2254,6 +2336,7 @@ void CGameStateRun::OnShow()
 			display_play_passed_time();
 			display_on_right_score();
 			display_clear_lines_animation();
+			display_game_start_animation();
 			if (tetris_game.game_over)
 			{
 				for_each(fire.begin(), fire.end(), [](CMovingBitmap& fire)
