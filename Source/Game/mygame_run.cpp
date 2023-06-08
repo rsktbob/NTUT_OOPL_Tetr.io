@@ -586,7 +586,7 @@ void CGameStateRun::game_init()
 	int bottom_cubes_border_position_x = 785 + horizontal_var;
 	int bottom_cubes_border_position_y = 864 - straight_var;
 	int lines_graph_position_x = 1114 - horizontal_var;
-	int lines_graph_position_y = 847 - straight_var;
+	int lines_graph_position_y = 848 - straight_var;
 	left_cube_border = vector<CMovingBitmap>(canvas_height - 2, cube_staight_border);
 	right_cube_border = vector<CMovingBitmap>(canvas_height - 2, lines_graph_border);
 	bottom_cube_border = vector<CMovingBitmap>(canvas_width + 1, cube_horizontal_border);
@@ -1066,20 +1066,33 @@ bool CGameStateRun::game_start_animation(GameType gametype)
 	{
 		if (gametype != GameType::zen)
 		{
-			int reciprocal = 4000 - (clock() - tetris_game.init_time);
+			int reciprocal = 4500 - (clock() - tetris_game.init_time);
 			if (reciprocal > 500)
 			{
 				reciprocal = (int)((double)(reciprocal) / 1000);
+				if (reciprocal > 3)
+				{
+					start_animation_font = "";
+					return true;
+				}
+				else if (reciprocal == 0)
+				{
+					start_animation_font = "Go";
+				}
+				else
+				{
+					start_animation_font = to_string(reciprocal);
+				}
 				if (!is_played_start_animation_effect[reciprocal])
 				{
 					music->Play(AUDIO_ID::Game_Start_Count);
 					is_played_start_animation_effect[reciprocal] = true;
 				}
-				start_animation_font = reciprocal == 0 ? "Go" : to_string(reciprocal);
 				return true;
 			}
 			tetris_game.game_start = true;
 			tetris_game.init_time = clock();
+			start_animation_font = "";
 			if (gametype == GameType::fourtyl || gametype == GameType::custom)
 			{
 				change_background_music((AUDIO_ID)(rand() % 6), true);
@@ -1089,33 +1102,7 @@ bool CGameStateRun::game_start_animation(GameType gametype)
 				change_background_music(AUDIO_ID::Hyper_Velocity, false);
 			}
 		}
-		else
-		{
-			int reciprocal = 2000 - (clock() - tetris_game.init_time);
-			if (reciprocal > 500)
-			{
-				reciprocal = (int)((double)(reciprocal) / 500);
-				if (!is_played_start_animation_effect[reciprocal])
-				{
-					music->Play(AUDIO_ID::Game_Start_Count);
-					is_played_start_animation_effect[reciprocal] = true;
-				}
-				if (reciprocal == 3)
-				{
-					start_animation_font = "Ready";
-				}
-				else if (reciprocal == 2)
-				{
-					start_animation_font = "Set";
-				}
-				else
-				{
-					start_animation_font = "Go";
-				}
-				return true;
-			}
-		}
-		tetris_game.game_start = true;
+		return false;
 	}
 	return false;
 }
@@ -1628,25 +1615,25 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/single_5.bmp", "resources/single_6.bmp", "resources/single_7.bmp" , "resources/single_8.bmp",  "resources/single_9.bmp",
 	"resources/single_10.bmp", "resources/single_11.bmp", "resources/single_12.bmp",  "resources/single_transparent.bmp" }, RGB(0, 0, 0));
 	single_scene.SetTopLeft(520, 375);
-	single_scene.SetAnimation(60, true);
+	single_scene.SetAnimation(50, true);
 
 	double_scene.LoadBitmapByString({ "resources/double_1.bmp", "resources/double_2.bmp", "resources/double_3.bmp" , "resources/double_4.bmp",
 	"resources/double_5.bmp", "resources/double_6.bmp", "resources/double_7.bmp" , "resources/double_8.bmp",  "resources/double_9.bmp",
 	"resources/double_10.bmp", "resources/double_11.bmp", "resources/double_12.bmp", "resources/double_transparent.bmp"  }, RGB(0, 0, 0));
 	double_scene.SetTopLeft(450, 395);
-	double_scene.SetAnimation(60, true);
+	double_scene.SetAnimation(50, true);
 
 	triple_scene.LoadBitmapByString({ "resources/triple_1.bmp", "resources/triple_2.bmp", "resources/triple_3.bmp" , "resources/triple_4.bmp",
 	"resources/triple_5.bmp", "resources/triple_6.bmp", "resources/triple_7.bmp" , "resources/triple_8.bmp",  "resources/triple_9.bmp",
 	"resources/triple_10.bmp", "resources/triple_11.bmp", "resources/triple_12.bmp", "resources/triple_transparent.bmp"  }, RGB(0, 0, 0));
 	triple_scene.SetTopLeft(480, 388);
-	triple_scene.SetAnimation(60, true);
+	triple_scene.SetAnimation(50, true);
 
 	quad_scene.LoadBitmapByString({ "resources/quad_1.bmp", "resources/quad_2.bmp", "resources/quad_3.bmp" , "resources/quad_4.bmp",
 	"resources/quad_5.bmp", "resources/quad_6.bmp", "resources/quad_7.bmp" , "resources/quad_8.bmp",  "resources/quad_9.bmp",
 	"resources/quad_10.bmp", "resources/quad_11.bmp", "resources/quad_12.bmp", "resources/quad_transparent.bmp"  }, RGB(0, 0, 0));
 	quad_scene.SetTopLeft(548, 383);
-	quad_scene.SetAnimation(60, true);
+	quad_scene.SetAnimation(50, true);
 
 
 	blitz_level_to_speed = { {1, 1000}, {2, 643} , {3, 404}, {4, 249},
@@ -1821,8 +1808,6 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			{
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(background_music);
-				background_music = rand() % 6;
-				music->Play(background_music, true);
 				again[0].SetAnimation(60, true);
 				game_init();
 				sub_phase = 2;
@@ -1889,8 +1874,6 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			{
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(background_music);
-				background_music = AUDIO_ID::Hyper_Velocity;
-				music->Play(background_music);
 				again[1].SetAnimation(60, true);
 				game_init();
 				sub_phase = 2;
@@ -1997,8 +1980,6 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			{
 				music->Play(AUDIO_ID::Click_Menu);
 				music->Stop(background_music);
-				background_music = rand() % 6;
-				music->Play(background_music, true);
 				again[2].SetAnimation(60, true);
 				game_init();
 				sub_phase = 2;
