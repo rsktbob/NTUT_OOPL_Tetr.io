@@ -347,6 +347,7 @@ namespace game_framework {
 		deque<Tromino> next_tromino_array;
 		optional<Tromino> hold_tromino;
 		queue<Color> random_color_array;
+		CMovingBitmap cube;
 		Canvas canvas;
 		Canvas next_canvas = Canvas(NEXT_CUBE_CANVAS_HEIGHT, vector<Color>(NEXT_CUBE_CANVAS_WIDTH));
 		Canvas hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
@@ -975,6 +976,11 @@ namespace game_framework {
 		string score_display;
 		char level_display[10] = {};
 		string start_animation_font;
+		bool test_mode = false;
+		int clear_lines_fourtyl = 40;
+		int clear_lines_zen = 20;
+		int clear_lines_custom = 150;
+		int remaing_time_blitz = 120000;
 		vector<bool> is_played_start_animation_effect;
 	};
 

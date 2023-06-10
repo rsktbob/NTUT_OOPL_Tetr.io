@@ -210,8 +210,8 @@ void CGameStateRun::display_play_passed_time()
 
 void CGameStateRun::display_play_remaining_time()
 {
-	game_remaining_time = 120000 - (clock() - tetris_game.init_time) >= 0 ? 120000 - (clock() - tetris_game.init_time) : 0;
-	game_remaining_time = tetris_game.game_start == true ? game_remaining_time : 120000;
+	game_remaining_time = remaing_time_blitz - (clock() - tetris_game.init_time) >= 0 ? remaing_time_blitz - (clock() - tetris_game.init_time) : 0;
+	game_remaining_time = tetris_game.game_start == true ? game_remaining_time : remaing_time_blitz;
 	game_minutes = game_remaining_time / 60000;
 	game_seconds = (game_remaining_time / 1000) % 60;
 	game_milliseconds = game_remaining_time % 1000;
@@ -348,9 +348,9 @@ void CGameStateRun::display_play_total_score(COLORREF color)
 
 void  CGameStateRun::display_reciprocal_animation()
 {
-	if (120000 - (clock() - tetris_game.init_time) <= 10000 && 120000 - (clock() - tetris_game.init_time) > 0 && !tetris_game.game_over)
+	if (remaing_time_blitz - (clock() - tetris_game.init_time) <= 10000 && remaing_time_blitz - (clock() - tetris_game.init_time) > 0 && !tetris_game.game_over)
 	{
-		string reciprocal_num = to_string(120000 - (clock() - tetris_game.init_time) < 0 ? 0 : (int)ceil((120000 - (double)(clock() - tetris_game.init_time)) / 1000));
+		string reciprocal_num = to_string(remaing_time_blitz - (clock() - tetris_game.init_time) < 0 ? 0 : (int)ceil((remaing_time_blitz - (double)(clock() - tetris_game.init_time)) / 1000));
 		unsigned reciprocal_num_displacement = reciprocal_num.length() * 35;
 		CDC *pDC = CDDraw::GetBackCDC();
 
@@ -564,7 +564,7 @@ void CGameStateRun::game_init()
 	game_decline_time_interval = 1000;
 	background.SetFrameIndexOfBitmap(rand() % 6);
 	tetris_game = TetrisGame(canvas_height, canvas_width);
-	game_remaining_time = 120000;
+	game_remaining_time = remaing_time_blitz;
 	game_current_time = clock();
 	tetris_game.init_time = clock();
 	game_next_decline_time = clock();
@@ -775,7 +775,7 @@ void CGameStateRun::game_model(GameType gametype)
 					{
 						game_control();
 					}
-					if (tetris_game.lines >= 40)
+					if (tetris_game.lines >= clear_lines_fourtyl)
 					{
 						tetris_game.game_success = true;
 					}
@@ -870,7 +870,7 @@ void CGameStateRun::game_model(GameType gametype)
 					if (tetris_game.lines >= blitz_level_to_lines[tetris_game.level])
 					{
 						tetris_game.lines -= blitz_level_to_lines[tetris_game.level];
-						tetris_game.level += 1;
+						tetris_game.level = tetris_game.level < 15 ? tetris_game.level+1 : 15;
 						game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
 					}
 					if (game_remaining_time == 0)
@@ -959,7 +959,7 @@ void CGameStateRun::game_model(GameType gametype)
 				sub_phase = 3;
 				record_current_time = clock() + 2000;
 			}
-			if (tetris_game.lines >= 20)
+			if (tetris_game.lines >= clear_lines_zen)
 			{
 				game_level_up_animation();
 			}
@@ -998,6 +998,12 @@ void CGameStateRun::game_model(GameType gametype)
 					{
 						game_clear_lines_animation(tetris_game.lines - current_lines);
 						current_lines = tetris_game.lines;
+					}
+					if (tetris_game.lines >= clear_lines_custom)
+					{
+						tetris_game.lines -= clear_lines_custom;
+						current_lines = tetris_game.lines;
+						tetris_game.level += 1;
 					}
 				}
 			}
@@ -1697,6 +1703,14 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 			}
 		}
 	}
+	if (nChar == 0x54)
+	{
+		test_mode = true;
+		clear_lines_fourtyl = 5;
+		clear_lines_zen = 5;
+		remaing_time_blitz = 20000;
+		clear_lines_custom = 5;
+	}
 }
 
 void CGameStateRun::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -2145,10 +2159,10 @@ void CGameStateRun::OnShow()
 			background.ShowBitmap();
 
 			display_game();
-			display_lines(40);
+			display_lines(clear_lines_fourtyl);
 			display_play_passed_time();
 			exit_scene.ShowBitmap();
-			display_lines_graph(40);
+			display_lines_graph(clear_lines_fourtyl);
 			display_clear_lines_animation();
 			display_game_start_animation();
 
@@ -2280,7 +2294,7 @@ void CGameStateRun::OnShow()
 			display_game();
 			display_on_button_score();
 			display_on_button_level();
-			display_lines_graph(20);
+			display_lines_graph(clear_lines_zen);
 			exit_scene.ShowBitmap();
 			display_clear_lines_animation();
 			display_game_start_animation();
@@ -2311,8 +2325,8 @@ void CGameStateRun::OnShow()
 		{
 			background.ShowBitmap();
 			display_game();
-			display_lines_graph(150);
-			display_lines(150);
+			display_lines_graph(clear_lines_custom);
+			display_lines(clear_lines_custom);
 			display_on_left_level();
 			display_play_passed_time();
 			display_on_right_score();
@@ -2337,5 +2351,14 @@ void CGameStateRun::OnShow()
 			display_play_total_score(RGB(197, 179, 244));
 			display_play_real_time(RGB(157, 151, 243));
 		}
+	}
+	if (test_mode)
+	{
+		CDC *pDC = CDDraw::GetBackCDC();
+
+		CTextDraw::ChangeFontLog(pDC, 50, "微軟正黑體", RGB(238, 255, 26), 50);
+		CTextDraw::Print(pDC, 8, 10, "Test_Mode");
+
+		CDDraw::ReleaseBackCDC();
 	}
 }
