@@ -122,7 +122,8 @@ namespace game_framework {
 		orange,
 		grey,
 		transparent,
-		translucent
+		translucent,
+		error
 	};
 
 	using Canvas = vector<vector<Color>>;
@@ -155,14 +156,37 @@ namespace game_framework {
 	{
 	public:
 		bool _is_touched_first = true;
-		AUDIO_ID _touch_audio_effect;
-		AUDIO_ID _click_audio_effect;
-		AUDIO_ID _next_background_music;
+		bool check_touch(CPoint point)
+		{
+			if (point.x >= this->GetLeft() && point.x <= this->GetLeft() + this->GetWidth()
+				&& point.y >= this->GetTop() && point.y <= this->GetTop() + this->GetHeight())
+			{
+				return true;
+			}
+			return false;
+		}
+		void change_state(CPoint point) {
+			if (check_touch(point) && _is_touched_first)
+			{
+				this->SetFrameIndexOfBitmap(1);
+				_is_touched_first = false;
+			}
+			else if (!check_touch(point) && !_is_touched_first)
+			{
+				this->SetFrameIndexOfBitmap(0);
+				_is_touched_first = true;
+			}
+		}
 
-		Button(AUDIO_ID touch_audio_effect, AUDIO_ID click_audio_effect, AUDIO_ID next_background_music);
-
-		bool is_clicked(UINT nFlags, CPoint point, CMovingBitmap character);
-		bool is_touched(CPoint point, CMovingBitmap character);
+		bool check_click(UINT nFlags, CPoint point) {
+			if (point.x >= this->GetLeft() && point.x <= this->GetLeft() + this->GetWidth()
+				&& point.y >= this->GetTop() && point.y <= this->GetTop() + this->GetHeight()
+				&& nFlags == VK_LBUTTON)
+			{
+				return true;
+			}
+			return false;
+		}
 	};
 
 	class Tromino
@@ -336,6 +360,7 @@ namespace game_framework {
 		int init_time = 0;
 		int per_round_score = 0;
 		bool game_start = false;
+		bool game_almost_over = false;
 		bool game_over = false;
 		bool game_success = false;
 		int canvas_width = 10;
@@ -347,7 +372,6 @@ namespace game_framework {
 		deque<Tromino> next_tromino_array;
 		optional<Tromino> hold_tromino;
 		queue<Color> random_color_array;
-		CMovingBitmap cube;
 		Canvas canvas;
 		Canvas next_canvas = Canvas(NEXT_CUBE_CANVAS_HEIGHT, vector<Color>(NEXT_CUBE_CANVAS_WIDTH));
 		Canvas hold_canvas = Canvas(HOLD_CUBE_CANVAS_HEIGHT, vector<Color>(HOLD_CUBE_CANVAS_WIDTH, Color::transparent));
@@ -760,6 +784,20 @@ namespace game_framework {
 			}
 			return random_color_arr;
 		}
+
+		bool check_game_almost_over()
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				for (int j = 0; j < canvas_width; j++)
+				{
+					if (canvas[i][j] > Color::grey) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -802,6 +840,7 @@ namespace game_framework {
 		bool touch_check(CPoint point, CMovingBitmap character);
 		void touch_option_menu(CPoint point);
 		void set_canvas(int hright, int width);
+		void game_almost_over_animation();
 		bool game_over_animation();
 		bool game_success_animation();
 		void game_level_up_animation();
@@ -837,7 +876,7 @@ namespace game_framework {
 		void fail_game_menu_touch(CPoint point);
 		void change_background_music(AUDIO_ID new_background_music, bool is_cycled);
 		void change_scene(int new_phase, int new_sub_phase, AUDIO_ID new_background_music, bool is_cycled);
-		CMovingBitmap Cube();
+
 	protected:
 		void OnMove();									// 移動遊戲元素
 		void OnShow();									// 顯示這個狀態的遊戲畫面
@@ -908,6 +947,7 @@ namespace game_framework {
 
 		TetrisGame tetris_game = TetrisGame(22, 10);
 		TetrisGame save_tetris_game = TetrisGame(22, 10);
+		CMovingBitmap cube;
 		vector<vector<CMovingBitmap>> cubes;
 		vector<vector<CMovingBitmap>> next_cubes = vector<vector<CMovingBitmap>>(NEXT_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(NEXT_CUBE_CANVAS_WIDTH));
 		vector<vector<CMovingBitmap>> hold_cubes = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH));
@@ -982,6 +1022,10 @@ namespace game_framework {
 		int clear_lines_custom = 150;
 		int remaing_time_blitz = 120000;
 		vector<bool> is_played_start_animation_effect;
+
+		Button play_url;
+		Button tetra_channel_url;
+		Button about_url;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////

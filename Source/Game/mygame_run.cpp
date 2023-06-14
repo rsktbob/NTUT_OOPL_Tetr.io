@@ -9,6 +9,9 @@
 #include <ctime>
 #include <algorithm>
 #include <string>
+/////////
+#include <windows.h>
+#include <shellapi.h>
 
 using namespace game_framework;
 
@@ -21,30 +24,6 @@ CAudio* music = CAudio::Instance();
 
 
 //Button----------------------------------------------------------------
-Button::Button(AUDIO_ID touch_audio_effect, AUDIO_ID click_audio_effect, AUDIO_ID next_background_music) : CMovingBitmap(),
-_touch_audio_effect(touch_audio_effect),
-_click_audio_effect(click_audio_effect),
-_next_background_music(next_background_music) {}
-
-bool Button::is_clicked(UINT nFlags, CPoint point, CMovingBitmap character)
-{
-	if (is_touched(point, character) && nFlags == VK_LBUTTON)
-	{
-		return true;
-	}
-	return false;
-}
-
-bool Button::is_touched(CPoint point, CMovingBitmap character)
-{
-	if (point.x >= character.GetLeft() && point.x <= character.GetLeft() + character.GetWidth() && point.y >= character.GetTop() && point.y <= character.GetTop() + character.GetHeight())
-	{
-		_is_touched_first = false;
-		return true;
-	}
-	_is_touched_first = true;
-	return false;
-}
 
 //---------------------------------------------------------------------
 
@@ -58,6 +37,12 @@ void TetrisGame::remove_and_prepend_rows() {
 			canvas.erase(canvas.begin() + row_index);
 			canvas.insert(canvas.begin(), vector<Color>(canvas_width, Color::black));
 		}
+	}
+	if (!check_game_almost_over()) {
+		game_almost_over = true;
+	}
+	else {
+		game_almost_over = false;
 	}
 	lines += per_round_lines;
 	per_round_score += cleared_lines_to_get_score[per_round_lines];
@@ -120,17 +105,6 @@ void CGameStateRun::set_canvas(int height, int width)
 	canvas_height = height + 2;
 	canvas_width = width;
 }
-
-CMovingBitmap CGameStateRun::Cube()
-{
-	CMovingBitmap cube;
-	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_light_blue.bmp", "resources/cube_yellow.bmp", "resources/cube_purple.bmp",  "resources/cube_green.bmp",
-		"resources/cube_red.bmp", "resources/cube_blue.bmp",  "resources/cube_orange.bmp", "resources/cube_grey.bmp" });
-	cube.LoadBitmapByString({ "resources/cube_transparent.bmp" }, RGB(255, 255, 255));
-	cube.LoadBitmapByString({ "resources/cube_translucent.bmp" });
-	return cube;
-}
-
 
 void CGameStateRun::display_game()
 {
@@ -411,6 +385,20 @@ void CGameStateRun::display_game_start_animation()
 	}
 }
 
+void CGameStateRun::game_almost_over_animation()
+{
+	if (cube_hold_border.GetFrameIndexOfBitmap() == 0) {
+		cube_hold_border.SetFrameIndexOfBitmap(1);
+		for (unsigned int i = 0; i < left_cube_border.size(); i++)
+		{
+			left_cube_border[i].SetFrameIndexOfBitmap(1);
+			right_cube_border[i].SetFrameIndexOfBitmap(1);
+		}
+		for (unsigned int i = 0; i < bottom_cube_border.size(); i++) bottom_cube_border[i].SetFrameIndexOfBitmap(1);
+		cube_next_border.SetFrameIndexOfBitmap(1);
+	}
+}
+
 bool CGameStateRun::game_over_animation()
 {
 	if (fire_animation_check)
@@ -569,7 +557,7 @@ void CGameStateRun::game_init()
 	tetris_game.init_time = clock();
 	game_next_decline_time = clock();
 	game_next_move_time = clock();
-	cubes = vector<vector<CMovingBitmap>>(canvas_height, vector<CMovingBitmap>(canvas_width, Cube()));
+	cubes = vector<vector<CMovingBitmap>>(canvas_height, vector<CMovingBitmap>(canvas_width, cube));
 	lines_graph = vector<CMovingBitmap>((canvas_height - 2) * 2, lines_graph_body);
 	straight_var = (22 - canvas_height) * 16;
 	horizontal_var = (10 - canvas_width) * 16;
@@ -1505,8 +1493,12 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	lines_graph_top.LoadBitmapByString({ "resources/lines_graph_top.bmp" });
 
-	next_cubes = vector<vector<CMovingBitmap>>(NEXT_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(NEXT_CUBE_CANVAS_WIDTH, Cube()));
-	hold_cubes = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH, Cube()));
+	cube.LoadBitmapByString({ "resources/cube_black.bmp", "resources/cube_light_blue.bmp", "resources/cube_yellow.bmp", "resources/cube_purple.bmp",  "resources/cube_green.bmp",
+		"resources/cube_red.bmp", "resources/cube_blue.bmp",  "resources/cube_orange.bmp", "resources/cube_grey.bmp" });
+	cube.LoadBitmapByString({ "resources/cube_transparent.bmp", "resources/cube_translucent.bmp", "resources/cube_error.bmp" }, RGB(255, 255, 255));
+
+	next_cubes = vector<vector<CMovingBitmap>>(NEXT_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(NEXT_CUBE_CANVAS_WIDTH, cube));
+	hold_cubes = vector<vector<CMovingBitmap>>(HOLD_CUBE_CANVAS_HEIGHT, vector<CMovingBitmap>(HOLD_CUBE_CANVAS_WIDTH, cube));
 
 	fire[0].LoadBitmapByString({ "resources/fire_1_lt.bmp", "resources/fire_2_lt.bmp", "resources/fire_3_lt.bmp", "resources/fire_4_lt.bmp", "resources/fire_5_lt.bmp",
 		"resources/fire_6_lt.bmp", "resources/fire_7_lt.bmp", "resources/fire_8_lt.bmp", "resources/fire_9_lt.bmp", "resources/fire_10_lt.bmp", "resources/fire_11_lt.bmp",
@@ -1621,25 +1613,25 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/single_5.bmp", "resources/single_6.bmp", "resources/single_7.bmp" , "resources/single_8.bmp",  "resources/single_9.bmp",
 	"resources/single_10.bmp", "resources/single_11.bmp", "resources/single_12.bmp",  "resources/single_transparent.bmp" }, RGB(0, 0, 0));
 	single_scene.SetTopLeft(520, 375);
-	single_scene.SetAnimation(50, true);
+	single_scene.SetAnimation(45, true);
 
 	double_scene.LoadBitmapByString({ "resources/double_1.bmp", "resources/double_2.bmp", "resources/double_3.bmp" , "resources/double_4.bmp",
 	"resources/double_5.bmp", "resources/double_6.bmp", "resources/double_7.bmp" , "resources/double_8.bmp",  "resources/double_9.bmp",
 	"resources/double_10.bmp", "resources/double_11.bmp", "resources/double_12.bmp", "resources/double_transparent.bmp"  }, RGB(0, 0, 0));
 	double_scene.SetTopLeft(450, 395);
-	double_scene.SetAnimation(50, true);
+	double_scene.SetAnimation(45, true);
 
 	triple_scene.LoadBitmapByString({ "resources/triple_1.bmp", "resources/triple_2.bmp", "resources/triple_3.bmp" , "resources/triple_4.bmp",
 	"resources/triple_5.bmp", "resources/triple_6.bmp", "resources/triple_7.bmp" , "resources/triple_8.bmp",  "resources/triple_9.bmp",
 	"resources/triple_10.bmp", "resources/triple_11.bmp", "resources/triple_12.bmp", "resources/triple_transparent.bmp"  }, RGB(0, 0, 0));
 	triple_scene.SetTopLeft(480, 388);
-	triple_scene.SetAnimation(50, true);
+	triple_scene.SetAnimation(45, true);
 
 	quad_scene.LoadBitmapByString({ "resources/quad_1.bmp", "resources/quad_2.bmp", "resources/quad_3.bmp" , "resources/quad_4.bmp",
 	"resources/quad_5.bmp", "resources/quad_6.bmp", "resources/quad_7.bmp" , "resources/quad_8.bmp",  "resources/quad_9.bmp",
 	"resources/quad_10.bmp", "resources/quad_11.bmp", "resources/quad_12.bmp", "resources/quad_transparent.bmp"  }, RGB(0, 0, 0));
 	quad_scene.SetTopLeft(548, 383);
-	quad_scene.SetAnimation(50, true);
+	quad_scene.SetAnimation(45, true);
 
 
 	blitz_level_to_speed = { {1, 1000}, {2, 643} , {3, 404}, {4, 249},
@@ -1649,6 +1641,12 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	blitz_level_to_lines = { {1, 3}, {2, 5}, {3, 7}, {4, 9}, {5, 11}, {6, 13},{7, 15},
 	{8, 17}, {9, 19}, {10, 21}, {11, 24}, {12, 26}, {13, 28}, {14, 30}, {15, 32} };
 
+	play_url.LoadBitmapByString({ "resources/play_url_transparent.bmp", "resources/play_url.bmp" }, RGB(0, 0, 0));
+	tetra_channel_url.LoadBitmapByString({ "resources/tetra_channel_url_transparent.bmp" , "resources/tetra_channel_url.bmp" }, RGB(0, 0, 0));
+	about_url.LoadBitmapByString({  "resources/about_url_transparent.bmp", "resources/about_url.bmp" }, RGB(0, 0, 0));
+	play_url.SetTopLeft(329, 0);
+	tetra_channel_url.SetTopLeft(445, 0);
+	about_url.SetTopLeft(668, 0);
 }
 
 void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -1657,7 +1655,7 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{
 		if (sub_phase == 2)
 		{
-			if (!tetris_game.game_over)
+			if (!tetris_game.game_over && tetris_game.game_start)
 			{
 				if (nChar == VK_UP)
 				{
@@ -1710,6 +1708,11 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		clear_lines_zen = 5;
 		remaing_time_blitz = 20000;
 		clear_lines_custom = 5;
+	}
+	if (test_mode && nChar == 0x41)
+	{
+		tetris_game.level = tetris_game.level < 15 ? tetris_game.level + 1 : 15;
+		game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
 	}
 }
 
@@ -2008,6 +2011,12 @@ void CGameStateRun::OnLButtonUp(UINT nFlags, CPoint point)	// 處理滑鼠的動
 
 void CGameStateRun::OnMouseMove(UINT nFlags, CPoint point)	// 處理滑鼠的動作
 {
+	if (phase == 1)
+	{
+		play_url.change_state(point);
+		tetra_channel_url.change_state(point);
+		about_url.change_state(point);
+	}
 	if (phase == 2)
 	{
 		for (int i = 0; i < 4; i++)
@@ -2106,6 +2115,9 @@ void CGameStateRun::OnShow()
 
 		osk.ShowBitmap();
 
+		play_url.ShowBitmap();
+		tetra_channel_url.ShowBitmap();
+		about_url.ShowBitmap();
 		if (sub_phase == 2)
 		{
 			sub_phase += 1;
