@@ -12,10 +12,9 @@
 /////////
 #include <windows.h>
 #include <shellapi.h>
+#include "music.h"
 
 using namespace game_framework;
-
-CAudio* music = CAudio::Instance();
 
 /////////////////////////////////////////////////////////////////////////////
 // 這個class為遊戲的遊戲執行物件，主要的遊戲程式都在這裡
@@ -26,27 +25,6 @@ CAudio* music = CAudio::Instance();
 //Button----------------------------------------------------------------
 
 //---------------------------------------------------------------------
-
-void TetrisGame::remove_and_prepend_rows() {
-	int per_round_lines = 0;
-	for (unsigned row_index = 0; row_index < canvas.size(); row_index++) {
-		vector<Color> row = canvas[row_index];
-		if (all_of(row.begin(), row.end(), [](Color color) { return color != Color::black; })) {
-			music->Play(AUDIO_ID::Cube_Clear);
-			per_round_lines += 1;
-			canvas.erase(canvas.begin() + row_index);
-			canvas.insert(canvas.begin(), vector<Color>(canvas_width, Color::black));
-		}
-	}
-	if (!check_game_almost_over()) {
-		game_almost_over = true;
-	}
-	else {
-		game_almost_over = false;
-	}
-	lines += per_round_lines;
-	per_round_score += cleared_lines_to_get_score[per_round_lines];
-}
 
 bool CGameStateRun::click_check(UINT nFlags, CPoint point, CMovingBitmap character)
 {
@@ -443,8 +421,8 @@ bool CGameStateRun::game_over_animation()
 				}
 			}
 			for (unsigned i = 0; i < lines_graph.size(); i++) { lines_graph[i].SetTopLeft(lines_graph[i].GetLeft(), lines_graph[i].GetTop() + 30); }
-			for (unsigned i = 0; i < left_cube_border.size(); i++) 
-			{ 
+			for (unsigned i = 0; i < left_cube_border.size(); i++)
+			{
 				left_cube_border[i].SetTopLeft(left_cube_border[i].GetLeft(), left_cube_border[i].GetTop() + 30);
 				right_cube_border[i].SetTopLeft(right_cube_border[i].GetLeft(), right_cube_border[i].GetTop() + 30);
 			}
@@ -616,7 +594,7 @@ void CGameStateRun::game_init()
 	for (int i = 0; i < (int)left_cube_border.size(); i++)
 	{
 		left_cube_border[i].SetTopLeft(left_cubes_border_position_x, left_cubes_border_position_y + i * 32);
-		right_cube_border[i].SetTopLeft(right_cubes_border_position_x, right_cubes_border_position_y + i  * 32);
+		right_cube_border[i].SetTopLeft(right_cubes_border_position_x, right_cubes_border_position_y + i * 32);
 	}
 	for (int i = 0; i < (int)bottom_cube_border.size(); i++)
 	{
@@ -858,7 +836,7 @@ void CGameStateRun::game_model(GameType gametype)
 					if (tetris_game.lines >= blitz_level_to_lines[tetris_game.level])
 					{
 						tetris_game.lines -= blitz_level_to_lines[tetris_game.level];
-						tetris_game.level = tetris_game.level < 15 ? tetris_game.level+1 : 15;
+						tetris_game.level = tetris_game.level < 15 ? tetris_game.level + 1 : 15;
 						game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
 					}
 					if (game_remaining_time == 0)
@@ -1280,7 +1258,6 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	background_music = AUDIO_ID::Arial_City;
 	id = 0;
 
-	music = CAudio::Instance();
 	music->Load(AUDIO_ID::Arial_City, "resources/Arial_City.wav");
 	music->Load(AUDIO_ID::To_The_Limit, "resources/To_The_Limit.wav");
 	music->Load(AUDIO_ID::The_Great_Eastern_Expedition, "resources/The_Great_Eastern_Expedition.wav");
@@ -1482,11 +1459,11 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 	"resources/custom_start_4.bmp", "resources/custom_start_3.bmp", "resources/custom_start_2.bmp" });
 	start[3].SetTopLeft(1394, 237);
 
-	cube_hold_border.LoadBitmapByString({ "resources/cube_hold_border.bmp",  "resources/cube_hold_border_red.bmp"}, RGB(0, 0, 255));
+	cube_hold_border.LoadBitmapByString({ "resources/cube_hold_border.bmp",  "resources/cube_hold_border_red.bmp" }, RGB(0, 0, 255));
 	cube_next_border.LoadBitmapByString({ "resources/cube_next_border.bmp", "resources/cube_next_border_red.bmp" }, RGB(0, 0, 255));
 
 	cube_staight_border.LoadBitmapByString({ "resources/cube_straight_border.bmp", "resources/cube_straight_border_red.bmp" });
-	cube_horizontal_border.LoadBitmapByString({ "resources/cube_horizontal_border.bmp", "resources/cube_horizontal_border_red.bmp"});
+	cube_horizontal_border.LoadBitmapByString({ "resources/cube_horizontal_border.bmp", "resources/cube_horizontal_border_red.bmp" });
 	lines_graph_border.LoadBitmapByString({ "resources/lines_graph_border.bmp", "resources/lines_graph_border_red.bmp" });
 
 	lines_graph_body.LoadBitmapByString({ "resources/lines_graph_body.bmp" });
@@ -1617,19 +1594,19 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	double_scene.LoadBitmapByString({ "resources/double_1.bmp", "resources/double_2.bmp", "resources/double_3.bmp" , "resources/double_4.bmp",
 	"resources/double_5.bmp", "resources/double_6.bmp", "resources/double_7.bmp" , "resources/double_8.bmp",  "resources/double_9.bmp",
-	"resources/double_10.bmp", "resources/double_11.bmp", "resources/double_12.bmp", "resources/double_transparent.bmp"  }, RGB(0, 0, 0));
+	"resources/double_10.bmp", "resources/double_11.bmp", "resources/double_12.bmp", "resources/double_transparent.bmp" }, RGB(0, 0, 0));
 	double_scene.SetTopLeft(450, 395);
 	double_scene.SetAnimation(45, true);
 
 	triple_scene.LoadBitmapByString({ "resources/triple_1.bmp", "resources/triple_2.bmp", "resources/triple_3.bmp" , "resources/triple_4.bmp",
 	"resources/triple_5.bmp", "resources/triple_6.bmp", "resources/triple_7.bmp" , "resources/triple_8.bmp",  "resources/triple_9.bmp",
-	"resources/triple_10.bmp", "resources/triple_11.bmp", "resources/triple_12.bmp", "resources/triple_transparent.bmp"  }, RGB(0, 0, 0));
+	"resources/triple_10.bmp", "resources/triple_11.bmp", "resources/triple_12.bmp", "resources/triple_transparent.bmp" }, RGB(0, 0, 0));
 	triple_scene.SetTopLeft(480, 388);
 	triple_scene.SetAnimation(45, true);
 
 	quad_scene.LoadBitmapByString({ "resources/quad_1.bmp", "resources/quad_2.bmp", "resources/quad_3.bmp" , "resources/quad_4.bmp",
 	"resources/quad_5.bmp", "resources/quad_6.bmp", "resources/quad_7.bmp" , "resources/quad_8.bmp",  "resources/quad_9.bmp",
-	"resources/quad_10.bmp", "resources/quad_11.bmp", "resources/quad_12.bmp", "resources/quad_transparent.bmp"  }, RGB(0, 0, 0));
+	"resources/quad_10.bmp", "resources/quad_11.bmp", "resources/quad_12.bmp", "resources/quad_transparent.bmp" }, RGB(0, 0, 0));
 	quad_scene.SetTopLeft(548, 383);
 	quad_scene.SetAnimation(45, true);
 
@@ -1643,7 +1620,7 @@ void CGameStateRun::OnInit()  								// 遊戲的初值及圖形設定
 
 	play_url.LoadBitmapByString({ "resources/play_url_transparent.bmp", "resources/play_url.bmp" }, RGB(0, 0, 0));
 	tetra_channel_url.LoadBitmapByString({ "resources/tetra_channel_url_transparent.bmp" , "resources/tetra_channel_url.bmp" }, RGB(0, 0, 0));
-	about_url.LoadBitmapByString({  "resources/about_url_transparent.bmp", "resources/about_url.bmp" }, RGB(0, 0, 0));
+	about_url.LoadBitmapByString({ "resources/about_url_transparent.bmp", "resources/about_url.bmp" }, RGB(0, 0, 0));
 	play_url.SetTopLeft(329, 0);
 	tetra_channel_url.SetTopLeft(445, 0);
 	about_url.SetTopLeft(668, 0);
