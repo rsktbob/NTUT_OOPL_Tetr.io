@@ -84,6 +84,17 @@ void CGameStateRun::set_canvas(int height, int width)
 	canvas_width = width;
 }
 
+void CGameStateRun::change_border_state(int state) {
+	cube_hold_border.SetFrameIndexOfBitmap(1);
+	cube_next_border.SetFrameIndexOfBitmap(1);
+	for (unsigned int i = 0; i < left_cube_border.size(); i++)
+	{
+		left_cube_border[i].SetFrameIndexOfBitmap(1);
+		right_cube_border[i].SetFrameIndexOfBitmap(1);
+	}
+	for (unsigned int i = 0; i < bottom_cube_border.size(); i++) bottom_cube_border[i].SetFrameIndexOfBitmap(1);
+}
+
 void CGameStateRun::display_game()
 {
 	cube_next_border.ShowBitmap();
@@ -363,30 +374,12 @@ void CGameStateRun::display_game_start_animation()
 	}
 }
 
-void CGameStateRun::game_almost_over_animation()
-{
-	if (cube_hold_border.GetFrameIndexOfBitmap() == 0) {
-		cube_hold_border.SetFrameIndexOfBitmap(1);
-		for (unsigned int i = 0; i < left_cube_border.size(); i++)
-		{
-			left_cube_border[i].SetFrameIndexOfBitmap(1);
-			right_cube_border[i].SetFrameIndexOfBitmap(1);
-		}
-		for (unsigned int i = 0; i < bottom_cube_border.size(); i++) bottom_cube_border[i].SetFrameIndexOfBitmap(1);
-		cube_next_border.SetFrameIndexOfBitmap(1);
-	}
-}
-
 bool CGameStateRun::game_over_animation()
 {
 	if (fire_animation_check)
 	{
 		music->Play(AUDIO_ID::Game_Over);
-		for_each(left_cube_border.begin(), left_cube_border.end(), [](CMovingBitmap &boder) { boder.SetFrameIndexOfBitmap(1);  });
-		for_each(right_cube_border.begin(), right_cube_border.end(), [](CMovingBitmap &boder) { boder.SetFrameIndexOfBitmap(1);  });
-		for_each(bottom_cube_border.begin(), bottom_cube_border.end(), [](CMovingBitmap &boder) { boder.SetFrameIndexOfBitmap(1);  });
-		cube_hold_border.SetFrameIndexOfBitmap(1);
-		cube_next_border.SetFrameIndexOfBitmap(1);
+		change_border_state(1);
 		font_color = RGB(255, 51, 0);
 		for (int i = 0; i < 4; i++)
 		{
@@ -753,6 +746,10 @@ void CGameStateRun::game_model(GameType gametype)
 					{
 						game_clear_lines_animation(tetris_game.lines - current_lines);
 						current_lines = tetris_game.lines;
+					}
+					if (tetris_game.game_almost_over && 
+						cube_hold_border.GetFrameIndexOfBitmap() != 1) {
+						change_border_state(1);
 					}
 				}
 			}

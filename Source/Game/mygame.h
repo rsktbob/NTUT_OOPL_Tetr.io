@@ -97,7 +97,7 @@ namespace game_framework {
 		bool touch_check(CPoint point, CMovingBitmap character);
 		void touch_option_menu(CPoint point);
 		void set_canvas(int hright, int width);
-		void game_almost_over_animation();
+		void change_border_state(int state);
 		bool game_over_animation();
 		bool game_success_animation();
 		void game_level_up_animation();

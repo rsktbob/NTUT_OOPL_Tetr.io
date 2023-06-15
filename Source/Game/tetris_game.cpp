@@ -398,6 +398,15 @@ namespace game_framework {
 		}
 		lines += per_round_lines;
 		per_round_score += cleared_lines_to_get_score[per_round_lines];
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < canvas_width; j++) {
+				if (canvas[i][j] != Color::black) {
+					game_almost_over = true;
+					return;
+				}
+			}
+		}
+		game_almost_over = false;
 	}
 
 	bool TetrisGame::is_game_over()
