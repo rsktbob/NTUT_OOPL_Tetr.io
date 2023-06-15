@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "tetris_game.h"
+#include "trimino.h"
 #pragma once
 
 namespace game_framework {

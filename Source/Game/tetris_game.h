@@ -14,6 +14,7 @@
 #include <ctime>
 #include <queue>
 #include <optional>
+#include "trimino.h"
 #include "music.h"
 
 
@@ -28,22 +29,6 @@ namespace game_framework {
 
 	const int HOLD_CUBE_CANVAS_WIDTH = 4;
 	const int HOLD_CUBE_CANVAS_HEIGHT = 2;
-
-	enum Color
-	{
-		black,
-		light_blue,
-		yellow,
-		purple,
-		green,
-		red,
-		blue,
-		orange,
-		grey,
-		transparent,
-		translucent,
-		error
-	};
 
 	enum class Event
 	{
@@ -63,170 +48,7 @@ namespace game_framework {
 		custom
 	};
 
-	using TrominoMatrix = vector<vector<char>>;
 	using Canvas = vector<vector<Color>>;
-
-	class Tromino
-	{
-	public:
-		int x;
-		int y;
-		Color color;
-		TrominoMatrix matrix;
-
-		Tromino(Color color, TrominoMatrix matrix, int canvas_width) : color(color), matrix(matrix)
-		{
-			x = (canvas_width - width()) / 2;
-			y = -height() + 1;
-		}
-
-		static Tromino according_color_tromino(Color color, int canvas_width)
-		{
-			TrominoMatrix matrix;
-
-			// https://stackoverflow.com/a/47588671
-			// https://tetris.wiki/Tetromino#The_basic_tetrominoes
-			switch (color)
-			{
-			case Color::light_blue:
-				matrix = {
-					{1, 1, 1, 1},
-				};
-				break;
-
-			case Color::yellow:
-				matrix = {
-					{1, 1},
-					{1, 1},
-				};
-				break;
-
-			case Color::purple:
-				matrix = {
-					{0, 1, 0},
-					{1, 1, 1},
-				};
-				break;
-
-			case Color::green:
-				matrix = {
-					{0, 1, 1},
-					{1, 1, 0},
-				};
-				break;
-
-			case Color::red:
-				matrix = {
-					{1, 1, 0},
-					{0, 1, 1},
-				};
-				break;
-
-			case Color::blue:
-				matrix = {
-					{1, 0, 0},
-					{1, 1, 1},
-				};
-				break;
-
-			case Color::orange:
-				matrix = {
-					{0, 0, 1},
-					{1, 1, 1},
-				};
-			}
-
-			return Tromino(color, matrix, canvas_width);
-		}
-
-		int width() const
-		{
-			return matrix[0].size();
-		}
-
-		int height() const
-		{
-			return matrix.size();
-		}
-
-		Color according_matrix_return_color()
-		{
-			if (matrix == TrominoMatrix({
-							  {1, 1, 1, 1},
-				}))
-			{
-				return Color::light_blue;
-			}
-			else if (matrix == TrominoMatrix({
-								   {1, 1},
-								   {1, 1},
-				}))
-			{
-				return Color::yellow;
-			}
-			else if (matrix == TrominoMatrix({
-								   {0, 1, 0},
-								   {1, 1, 1},
-				}))
-			{
-				return Color::purple;
-			}
-			else if (matrix == TrominoMatrix({
-								   {0, 1, 1},
-								   {1, 1, 0},
-				}))
-			{
-				return Color::green;
-			}
-			else if (matrix == TrominoMatrix({
-								   {1, 1, 0},
-								   {0, 1, 1},
-				}))
-			{
-				return Color::red;
-			}
-			else if (matrix == TrominoMatrix({
-								   {1, 0, 0},
-								   {1, 1, 1},
-				}))
-			{
-				return Color::blue;
-			}
-			else
-			{
-				return Color::orange;
-			}
-		}
-
-		TrominoMatrix according_color_return_matrix()
-		{
-			switch (color)
-			{
-			case Color::light_blue:
-				return {
-					{1, 1, 1, 1},
-				};
-			case Color::yellow:
-				return { {1, 1},
-						{1, 1} };
-			case Color::purple:
-				return { {0, 1, 0},
-						{1, 1, 1} };
-			case Color::green:
-				return { {0, 1, 1},
-						{1, 1, 0} };
-			case Color::red:
-				return { {1, 1, 0},
-						{0, 1, 1} };
-			case Color::blue:
-				return { {1, 0, 0},
-						{1, 1, 1} };
-			default:
-				return { {0, 0, 1},
-						{1, 1, 1} };
-			}
-		}
-	};
 
 	class TetrisGame
 	{
