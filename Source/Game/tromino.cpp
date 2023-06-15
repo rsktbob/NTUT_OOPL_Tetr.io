@@ -4,7 +4,7 @@
 
 namespace game_framework
 {
-	Tromino::Tromino(Color color, TrominoMatrix matrix, int canvas_width) : color(color), matrix(matrix)
+    Tromino::Tromino(Color color, TrominoMatrix matrix, int canvas_width) : color(color), matrix(matrix)
     {
         x = (canvas_width - width()) / 2;
         y = -height() + 1;

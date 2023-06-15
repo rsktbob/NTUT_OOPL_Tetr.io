@@ -59,7 +59,6 @@ namespace game_framework {
 		int init_time = 0;
 		int per_round_score = 0;
 		bool game_start = false;
-		bool game_almost_over = false;
 		bool game_over = false;
 		bool game_success = false;
 		int canvas_width = 10;
@@ -99,7 +98,6 @@ namespace game_framework {
 		bool is_game_over();
 		void clear_all_canvas();
 		queue<Color> produce_seven_color_not_repeative();
-		bool check_game_almost_over();
 	};
 }
 

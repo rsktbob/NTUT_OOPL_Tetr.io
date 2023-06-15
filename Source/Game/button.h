@@ -12,6 +12,7 @@
 #include "music.h"
 
 namespace game_framework {
+
 	enum Direction
 	{
 		left,

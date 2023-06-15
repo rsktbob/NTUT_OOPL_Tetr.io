@@ -85,14 +85,14 @@ void CGameStateRun::set_canvas(int height, int width)
 }
 
 void CGameStateRun::change_border_state(int state) {
-	cube_hold_border.SetFrameIndexOfBitmap(1);
-	cube_next_border.SetFrameIndexOfBitmap(1);
+	cube_hold_border.SetFrameIndexOfBitmap(state);
+	cube_next_border.SetFrameIndexOfBitmap(state);
 	for (unsigned int i = 0; i < left_cube_border.size(); i++)
 	{
-		left_cube_border[i].SetFrameIndexOfBitmap(1);
-		right_cube_border[i].SetFrameIndexOfBitmap(1);
+		left_cube_border[i].SetFrameIndexOfBitmap(state);
+		right_cube_border[i].SetFrameIndexOfBitmap(state);
 	}
-	for (unsigned int i = 0; i < bottom_cube_border.size(); i++) bottom_cube_border[i].SetFrameIndexOfBitmap(1);
+	for (unsigned int i = 0; i < bottom_cube_border.size(); i++) bottom_cube_border[i].SetFrameIndexOfBitmap(state);
 }
 
 void CGameStateRun::display_game()
@@ -145,7 +145,6 @@ void CGameStateRun::display_lines(unsigned lines_total)
 
 	CDDraw::ReleaseBackCDC();
 }
-
 
 void CGameStateRun::display_play_passed_time()
 {
@@ -746,10 +745,6 @@ void CGameStateRun::game_model(GameType gametype)
 					{
 						game_clear_lines_animation(tetris_game.lines - current_lines);
 						current_lines = tetris_game.lines;
-					}
-					if (tetris_game.game_almost_over && 
-						cube_hold_border.GetFrameIndexOfBitmap() != 1) {
-						change_border_state(1);
 					}
 				}
 			}
@@ -1910,6 +1905,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 				set_canvas(20, 10);
 				game_init();
 				tetris_game = save_tetris_game;
+				tetris_game.game_start = true;
 				sub_phase = 2;
 			}
 		}

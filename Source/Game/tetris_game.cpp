@@ -388,25 +388,8 @@ namespace game_framework {
 				canvas.insert(canvas.begin(), vector<Color>(canvas_width, Color::black));
 			}
 		}
-		if (!check_game_almost_over())
-		{
-			game_almost_over = true;
-		}
-		else
-		{
-			game_almost_over = false;
-		}
 		lines += per_round_lines;
 		per_round_score += cleared_lines_to_get_score[per_round_lines];
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < canvas_width; j++) {
-				if (canvas[i][j] != Color::black) {
-					game_almost_over = true;
-					return;
-				}
-			}
-		}
-		game_almost_over = false;
 	}
 
 	bool TetrisGame::is_game_over()
@@ -443,20 +426,5 @@ namespace game_framework {
 			color_arr[random_pos] = key;
 		}
 		return random_color_arr;
-	}
-
-	bool TetrisGame::check_game_almost_over()
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < canvas_width; j++)
-			{
-				if (canvas[i][j] > Color::grey)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 }
