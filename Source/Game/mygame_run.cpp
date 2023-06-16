@@ -1683,6 +1683,11 @@ void CGameStateRun::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		tetris_game.level = tetris_game.level < 15 ? tetris_game.level + 1 : 15;
 		game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
 	}
+	if (test_mode && nChar == 0x53)
+	{
+		tetris_game.level = tetris_game.level > 1 ? tetris_game.level - 1 : 1;
+		game_decline_time_interval = blitz_level_to_speed[tetris_game.level];
+	}
 }
 
 void CGameStateRun::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)

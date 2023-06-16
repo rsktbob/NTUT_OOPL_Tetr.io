@@ -195,6 +195,40 @@ namespace game_framework {
 		}
 	}
 
+	/*void TetrisGame::rotate_active_tromino()
+	{
+		TrominoMatrix new_matrix(active_tromino->width(), vector<char>(active_tromino->height(), 0));
+
+		for (unsigned row_index = 0; row_index < active_tromino->matrix.size(); row_index++)
+		{
+			for (unsigned column_index = 0; column_index < active_tromino->matrix[row_index].size(); column_index++)
+			{
+				new_matrix[column_index][active_tromino->height() - 1 - row_index] = active_tromino->matrix[row_index][column_index];
+			}
+		}
+
+		for (unsigned row_index = 0; row_index < new_matrix.size(); row_index++)
+		{
+			for (unsigned column_index = 0; column_index < new_matrix[row_index].size(); column_index++)
+			{
+				int x = active_tromino->x + column_index;
+				int y = active_tromino->y + row_index;
+
+				if (y > 0 && x > 0 && canvas[y][x] != Color::black)
+				{
+					return;
+				}
+			}
+		}
+
+		active_tromino->matrix = new_matrix;
+
+		if (active_tromino->x + (active_tromino->width() - 1) >= canvas_width)
+		{
+			active_tromino->x = canvas_width - active_tromino->width();
+		}
+	}*/
+
 	void TetrisGame::hold_active_tromino()
 	{
 		if (hold_once_per_round)

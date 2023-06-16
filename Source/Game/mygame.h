@@ -151,7 +151,7 @@ namespace game_framework {
 		bool touch_option_menu_selected;
 
 		CMovingBitmap first_menu;						// 一級菜單
-		CMovingBitmap join;
+		Button join;
 		CMovingBitmap tittle;
 		CMovingBitmap osk;
 
