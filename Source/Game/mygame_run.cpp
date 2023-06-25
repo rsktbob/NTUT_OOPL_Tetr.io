@@ -1834,7 +1834,7 @@ void CGameStateRun::OnLButtonDown(UINT nFlags, CPoint point)  // 處理滑鼠的
 			if (click_check(nFlags, point, start[1]))
 			{
 				music->Play(AUDIO_ID::Click_Menu);
-				music->Stop(AUDIO_ID::Arial_City);
+				music->Play(AUDIO_ID::Arial_City);
 				set_canvas(20, 10);
 				game_init();
 				sub_phase = 2;
